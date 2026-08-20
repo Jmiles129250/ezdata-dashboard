@@ -855,21 +855,23 @@ const DEFAULT_CONFIG = {
       fields: [
         {
           id: 'f-temperature',
-          name: '环境温度',
+          key: 'temperature',
+          label: '环境温度',
           unit: '°C',
           dataToken: '20923cad1b9c4bbbb50803655665fedd',
-          icon: 'thermometer',
           color: '#FF9F0A',
+          decimals: 1,
           min: -10, max: 60, warn: [15, 35],
           chartable: true
         },
         {
           id: 'f-humidity',
-          name: '环境湿度',
+          key: 'humidity',
+          label: '环境湿度',
           unit: '%',
           dataToken: '6ff96a0bd96f43ee8380bf3e7e0e5237',
-          icon: 'droplets',
           color: '#0A84FF',
+          decimals: 1,
           min: 0, max: 100, warn: [30, 80],
           chartable: true
         }
