@@ -1,0 +1,2715 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="auto">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#F2F2F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<title>物联网数据监测平台 · EzData2</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="preconnect" href="https://unpkg.com">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+/* ===== reset & tokens ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro SC","PingFang SC","Helvetica Neue","Inter","Segoe UI",Roboto,sans-serif;
+  font-size:15px;line-height:1.4;
+  background:var(--bg);color:var(--text);
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+}
+button,input,select,textarea{font:inherit;color:inherit;background:none;border:none;outline:none}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+a{color:inherit;text-decoration:none}
+svg{display:block}
+:root{
+  /* light */
+  --bg:#F2F2F7;
+  --bg-2:#FFFFFF;
+  --card:#FFFFFF;
+  --card-2:#F8F8FA;
+  --text:#1C1C1E;
+  --sub:#8E8E93;
+  --ter:#3C3C43;
+  --line:rgba(60,60,67,0.12);
+  --line-2:rgba(60,60,67,0.20);
+  --shadow:0 1px 2px rgba(0,0,0,.04), 0 6px 24px rgba(0,0,0,.06);
+  --shadow-lg:0 12px 40px rgba(0,0,0,.12);
+  --hi:rgba(255,255,255,.6);
+  --ok:#34C759;
+  --warn:#FF9F0A;
+  --err:#FF3B30;
+  --info:#0A84FF;
+  --radius-s:10px;
+  --radius-m:14px;
+  --radius-l:20px;
+  --radius-xl:28px;
+  --t-fast:.18s cubic-bezier(.2,.7,.3,1);
+  --t-med:.28s cubic-bezier(.22,.61,.36,1);
+  --t-slow:.45s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"]{
+  --bg:#000000;
+  --bg-2:#1C1C1E;
+  --card:#1C1C1E;
+  --card-2:#2C2C2E;
+  --text:#FFFFFF;
+  --sub:#8E8E93;
+  --ter:#EBEBF5;
+  --line:rgba(255,255,255,0.10);
+  --line-2:rgba(255,255,255,0.18);
+  --shadow:0 1px 2px rgba(0,0,0,.6), 0 8px 28px rgba(0,0,0,.7);
+  --shadow-lg:0 12px 40px rgba(0,0,0,.7);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#000000;
+    --bg-2:#1C1C1E;
+    --card:#1C1C1E;
+    --card-2:#2C2C2E;
+    --text:#FFFFFF;
+    --sub:#8E8E93;
+    --ter:#EBEBF5;
+    --line:rgba(255,255,255,0.10);
+    --line-2:rgba(255,255,255,0.18);
+    --shadow:0 1px 2px rgba(0,0,0,.6), 0 8px 28px rgba(0,0,0,.7);
+    --shadow-lg:0 12px 40px rgba(0,0,0,.7);
+  }
+}
+@media (prefers-color-scheme: light){
+  :root[data-theme="dark"]{
+    --bg:#000000;--bg-2:#1C1C1E;--card:#1C1C1E;--card-2:#2C2C2E;
+    --text:#FFFFFF;--sub:#8E8E93;--ter:#EBEBF5;
+    --line:rgba(255,255,255,0.10);--line-2:rgba(255,255,255,0.18);
+    --shadow:0 1px 2px rgba(0,0,0,.6),0 8px 28px rgba(0,0,0,.7);
+    --shadow-lg:0 12px 40px rgba(0,0,0,.7);
+  }
+}
+
+/* ===== topbar ===== */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);
+  background:color-mix(in srgb, var(--bg) 78%, transparent);
+  border-bottom:.5px solid var(--line);
+  padding:14px 24px;
+  display:flex;align-items:center;gap:14px;
+  min-height:56px;
+}
+.topbar .logo{
+  display:flex;align-items:center;gap:10px;
+  font-weight:600;font-size:17px;letter-spacing:-.01em;
+}
+.topbar .logo .badge{
+  background:var(--info);color:#fff;
+  font-size:11px;font-weight:700;
+  padding:2px 8px;border-radius:6px;letter-spacing:.04em;
+}
+.topbar .spacer{flex:1}
+.topbar .info{
+  display:flex;align-items:center;gap:10px;
+  font-size:13px;color:var(--sub);
+}
+.topbar .info .dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb, var(--ok) 20%, transparent);
+  transition:background var(--t-fast);
+}
+.topbar .info.off .dot{background:var(--err);box-shadow:0 0 0 3px color-mix(in srgb, var(--err) 20%, transparent)}
+.topbar .info .poll{margin-left:6px;font-variant-numeric:tabular-nums}
+.topbar .info .iv-btn{
+  display:inline-flex;align-items:center;gap:4px;
+  margin-left:4px;padding:3px 10px;
+  border:1px solid color-mix(in srgb, var(--text) 22%, transparent);
+  border-radius:999px;
+  background:color-mix(in srgb, var(--text) 8%, transparent);
+  color:var(--text);font-size:12px;font-weight:600;
+  font-variant-numeric:tabular-nums;cursor:pointer;
+  transition:background var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
+}
+.topbar .info .iv-btn svg{width:12px;height:12px;opacity:.7}
+.topbar .info .iv-btn:hover{
+  background:color-mix(in srgb, var(--accent, #0A84FF) 18%, transparent);
+  border-color:color-mix(in srgb, var(--accent, #0A84FF) 45%, transparent);
+}
+.topbar .info .iv-btn:active{transform:scale(.95)}
+.iv-menu{
+  position:fixed;z-index:900;
+  min-width:208px;padding:6px;
+  background:var(--card);border:1px solid var(--line);
+  border-radius:14px;box-shadow:0 12px 36px rgba(0,0,0,.22);
+}
+.iv-menu .iv-opt{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  width:100%;padding:8px 10px;border:none;border-radius:9px;
+  background:transparent;color:var(--text);font-size:13px;cursor:pointer;text-align:left;
+  transition:background var(--t-fast);
+}
+.iv-menu .iv-opt:hover{background:var(--card-2)}
+.iv-menu .iv-opt.on{color:#0A84FF;font-weight:600}
+.iv-menu .iv-opt em{font-style:normal;font-size:10px;color:var(--sub);margin-left:5px;font-weight:500}
+.iv-menu .iv-opt svg{width:14px;height:14px;color:#0A84FF;flex:none}
+.iv-menu .iv-custom{
+  display:flex;gap:6px;margin-top:5px;padding:8px 4px 4px;
+  border-top:1px solid var(--line);
+}
+.iv-menu .iv-custom input{
+  flex:1;min-width:0;padding:6px 9px;
+  border:1px solid var(--line-2);border-radius:8px;
+  background:var(--card-2);color:var(--text);font-size:12px;
+}
+.iv-menu .iv-custom input:focus{outline:none;border-color:#0A84FF}
+.iv-menu .iv-go{
+  padding:6px 11px;border:none;border-radius:8px;
+  background:#0A84FF;color:#fff;font-size:12px;font-weight:600;cursor:pointer;
+}
+.iv-menu .iv-note{padding:6px 8px 3px;font-size:10.5px;color:var(--sub);line-height:1.4}
+.icon-btn{
+  width:38px;height:38px;border-radius:12px;
+  display:inline-flex;align-items:center;justify-content:center;
+  color:var(--text);
+  background:transparent;
+  transition:background var(--t-fast), transform var(--t-fast);
+}
+.icon-btn:hover{background:var(--card-2)}
+.icon-btn:active{transform:scale(.94)}
+.icon-btn svg{width:20px;height:20px}
+.icon-btn.spinning svg, .icon-btn.spinning i{animation:spin 1s linear infinite}
+.icon-btn.spinning{pointer-events:none;opacity:.6}
+
+/* ===== alert bar ===== */
+#alert-bar{
+  margin:14px 24px 0;
+  padding:12px 16px;
+  background:color-mix(in srgb, var(--err) 12%, var(--card));
+  border:1px solid color-mix(in srgb, var(--err) 25%, transparent);
+  border-radius:var(--radius-m);
+  display:none;align-items:center;gap:10px;
+  font-size:14px;color:var(--text);
+  animation:slideIn .3s var(--t-med);
+}
+#alert-bar.show{display:flex}
+#alert-bar .a-icon{
+  width:32px;height:32px;border-radius:10px;
+  background:var(--err);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+}
+#alert-bar .a-text{flex:1;line-height:1.4}
+#alert-bar .a-text strong{color:var(--err)}
+@keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+
+/* ===== main container ===== */
+main{
+  max-width:1400px;
+  margin:18px auto 80px;
+  padding:0 24px;
+}
+.section-title{
+  display:flex;align-items:baseline;gap:12px;
+  margin:28px 4px 14px;
+  font-size:22px;font-weight:700;letter-spacing:-.02em;
+}
+.section-title small{
+  font-size:13px;font-weight:500;color:var(--sub);
+}
+
+/* ===== group card ===== */
+.group{
+  background:var(--card);
+  border-radius:var(--radius-l);
+  box-shadow:var(--shadow);
+  border:.5px solid var(--line);
+  margin-bottom:24px;
+  overflow:hidden;
+}
+.group-head{
+  padding:18px 22px;
+  display:flex;align-items:center;gap:14px;
+  border-bottom:.5px solid var(--line);
+  background:var(--card);
+}
+.group-head .g-icon{
+  width:42px;height:42px;border-radius:12px;
+  background:var(--card-2);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--info);
+}
+.group-head .g-icon svg{width:22px;height:22px}
+.group-head .g-info{flex:1;min-width:0}
+.group-head .g-name{
+  font-size:17px;font-weight:600;letter-spacing:-.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.group-head .g-sub{
+  font-size:12px;color:var(--sub);
+  display:flex;align-items:center;gap:8px;margin-top:2px;
+}
+.group-head .g-sub .g-status{
+  display:inline-flex;align-items:center;gap:5px;
+}
+.group-head .g-sub .g-status .dot{
+  width:7px;height:7px;border-radius:50%;background:var(--ok);
+}
+.group-head .g-sub.off .g-status .dot{background:var(--err)}
+
+/* device heartbeat badge */
+.device-badge{
+  display:inline-flex;align-items:center;gap:3px;
+  padding:1px 6px;border-radius:6px;
+  font-size:10.5px;font-weight:500;
+  margin-left:6px;white-space:nowrap;
+}
+.device-badge.on{background:rgba(52,199,89,.15);color:var(--ok)}
+.device-badge.off{background:rgba(255,59,48,.15);color:var(--err)}
+.device-badge.unknown{background:rgba(255,149,0,.15);color:var(--warn)}
+.group-head .g-actions{display:flex;gap:6px}
+.group-head .g-actions .icon-btn{width:34px;height:34px}
+.group-head .g-actions .icon-btn svg{width:18px;height:18px}
+.fields-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(240px, 1fr));
+  gap:14px;
+  padding:18px 22px 22px;
+}
+
+/* ===== field card ===== */
+.field{
+  background:var(--card-2);
+  border-radius:var(--radius-m);
+  padding:18px 18px 16px;
+  cursor:pointer;
+  position:relative;
+  border:.5px solid var(--line);
+  transition:transform var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
+}
+.field:hover{
+  transform:translateY(-2px);
+  box-shadow:0 6px 20px rgba(0,0,0,.08);
+  background:var(--card);
+}
+.field:active{transform:translateY(-1px) scale(.99)}
+.field .row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.field .row1 .f-label{
+  font-size:13px;font-weight:600;color:var(--sub);
+  letter-spacing:.02em;
+  display:flex;align-items:center;gap:6px;
+}
+.field .row1 .f-icon{
+  width:24px;height:24px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;
+}
+.field .row1 .f-icon svg{width:14px;height:14px}
+.field .value{
+  font-size:38px;font-weight:700;letter-spacing:-.03em;
+  line-height:1.05;color:var(--text);
+  font-variant-numeric:tabular-nums;
+  display:flex;align-items:baseline;gap:6px;
+}
+.field .value .unit{font-size:18px;font-weight:600;color:var(--sub);margin-left:2px}
+.field .delta{
+  margin-left:auto;
+  font-size:12px;font-weight:600;
+  display:inline-flex;align-items:center;gap:3px;
+  padding:3px 7px;border-radius:8px;
+  background:var(--card);
+}
+.field .delta.up{color:var(--err)}
+.field .delta.down{color:var(--info)}
+.field .delta.flat{color:var(--sub)}
+.field .spark{margin-top:10px;height:38px;border-radius:8px;overflow:hidden}
+.field .footer-line{
+  margin-top:14px;
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:11px;color:var(--sub);
+  font-variant-numeric:tabular-nums;
+}
+.field .badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:11px;font-weight:600;
+  padding:2px 7px;border-radius:6px;
+  background:var(--ok);color:#fff;
+}
+.field .badge.off{background:var(--err)}
+.field .badge.warn{background:var(--warn)}
+/* 字段自动学习到的上报周期（每个字段独立） */
+.field .hint-pill{
+  font-size:10.5px;font-weight:500;letter-spacing:.2px;
+  padding:2px 7px;border-radius:5px;
+  background:color-mix(in srgb, var(--sub) 12%, transparent);
+  color:var(--sub);
+  cursor:help;
+}
+
+/* offline state */
+.field.offline{opacity:.55;filter:saturate(.3)}
+.field.offline .value{
+  color:var(--sub);
+  font-size:32px;
+}
+.field.offline .value .unit{font-size:14px}
+/* stale state — 数据陈旧中（不算离线但可疑）*/
+.field.stale{border-color:color-mix(in srgb, var(--warn) 35%, transparent)}
+.field.stale .value{color:var(--warn)}
+.field.stale .spark{opacity:.5}
+
+/* ===== empty state ===== */
+.empty{
+  background:var(--card);
+  border-radius:var(--radius-l);
+  padding:60px 40px;
+  text-align:center;
+  border:.5px solid var(--line);
+  box-shadow:var(--shadow);
+}
+.empty .e-icon{
+  width:72px;height:72px;border-radius:22px;
+  background:var(--card-2);
+  margin:0 auto 24px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--info);
+}
+.empty .e-icon svg{width:36px;height:36px}
+.empty h2{font-size:24px;font-weight:600;letter-spacing:-.02em;margin-bottom:8px}
+.empty p{color:var(--sub);font-size:15px;max-width:420px;margin:0 auto 24px;line-height:1.6}
+.empty .btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+/* ===== buttons ===== */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:10px 18px;border-radius:12px;
+  font-size:15px;font-weight:600;
+  background:var(--info);color:#fff;
+  transition:transform var(--t-fast), opacity var(--t-fast), background var(--t-fast);
+}
+.btn:hover{opacity:.92}
+.btn:active{transform:scale(.96)}
+.btn svg{width:16px;height:16px}
+.btn.secondary{background:var(--card-2);color:var(--text);border:.5px solid var(--line)}
+.btn.secondary:hover{background:var(--bg)}
+.btn.ghost{background:transparent;color:var(--text)}
+.btn.ghost:hover{background:var(--card-2)}
+.btn.danger{background:var(--err);color:#fff}
+.btn.sm{padding:6px 12px;font-size:13px;border-radius:9px}
+
+/* ===== drawer (admin) ===== */
+.drawer-mask{
+  position:fixed;inset:0;z-index:90;
+  background:rgba(0,0,0,.4);
+  opacity:0;pointer-events:none;
+  transition:opacity var(--t-med);
+}
+.drawer-mask.open{opacity:1;pointer-events:auto}
+.drawer{
+  position:fixed;top:0;right:0;height:100%;
+  width:min(440px, 100%);
+  background:var(--bg);
+  z-index:100;
+  transform:translateX(100%);
+  transition:transform var(--t-med);
+  display:flex;flex-direction:column;
+  box-shadow:-10px 0 40px rgba(0,0,0,.18);
+}
+.drawer.open{transform:translateX(0)}
+.drawer.wide{width:min(800px, 100%)}
+.drawer-head{
+  padding:16px 20px;
+  border-bottom:.5px solid var(--line);
+  display:flex;align-items:center;gap:10px;
+  background:var(--bg);
+  position:sticky;top:0;z-index:2;
+}
+.drawer-head h3{font-size:17px;font-weight:600;letter-spacing:-.01em;flex:1}
+.drawer-body{flex:1;overflow-y:auto;padding:18px 20px 80px}
+.drawer-foot{
+  padding:14px 20px;border-top:.5px solid var(--line);
+  background:var(--bg);
+  display:flex;justify-content:space-between;gap:10px;
+  position:sticky;bottom:0;
+}
+.drawer-foot:empty{display:none}
+
+/* form */
+.form-row{margin-bottom:18px}
+.form-row label{
+  display:block;font-size:13px;font-weight:600;
+  color:var(--text);margin-bottom:7px;
+  display:flex;align-items:center;gap:6px;
+}
+.form-row label .hint{
+  font-weight:400;color:var(--sub);font-size:11px;
+  margin-left:auto;
+}
+.form-row input[type=text],
+.form-row input[type=password],
+.form-row input[type=number],
+.form-row select,
+.form-row textarea{
+  width:100%;padding:11px 13px;
+  border-radius:10px;
+  background:var(--card);
+  border:.5px solid var(--line);
+  color:var(--text);
+  font-size:15px;
+  transition:border var(--t-fast), background var(--t-fast);
+}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{
+  border-color:var(--info);
+  background:var(--card);
+}
+.form-row .help{
+  font-size:12px;color:var(--sub);margin-top:6px;line-height:1.5;
+}
+.form-row.inline{display:flex;gap:12px;align-items:center}
+.form-row.inline>*{flex:1}
+.form-row.inline label{margin-bottom:0}
+.color-pick{
+  display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;
+}
+.color-pick .sw{
+  width:30px;height:30px;border-radius:10px;
+  border:2px solid transparent;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;
+}
+.color-pick .sw.active{
+  border-color:var(--text);
+  box-shadow:0 0 0 2px var(--bg);
+}
+
+/* list items */
+.list-item{
+  display:flex;align-items:center;gap:12px;
+  padding:14px;border-radius:var(--radius-m);
+  background:var(--card);
+  border:.5px solid var(--line);
+  margin-bottom:10px;
+  transition:background var(--t-fast);
+}
+.list-item:hover{background:var(--card-2)}
+.list-item .li-icon{
+  width:36px;height:36px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;flex-shrink:0;
+}
+.list-item .li-icon svg{width:18px;height:18px}
+.list-item .li-info{flex:1;min-width:0}
+.list-item .li-info .li-title{font-weight:600;font-size:14px}
+.list-item .li-info .li-sub{font-size:12px;color:var(--sub);margin-top:2px}
+.list-item .li-actions{display:flex;gap:4px;flex-shrink:0}
+.list-item .li-actions button{
+  width:30px;height:30px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--sub);
+}
+.list-item .li-actions button:hover{background:var(--bg);color:var(--text)}
+.list-item .li-actions button svg{width:15px;height:15px}
+
+.muted{color:var(--sub)}
+.empty-section{
+  text-align:center;padding:40px 20px;color:var(--sub);
+  border:1.5px dashed var(--line);
+  border-radius:var(--radius-m);
+}
+.empty-section svg{width:36px;height:36px;margin-bottom:10px;color:var(--sub);opacity:.7}
+.empty-section .t{font-weight:600;color:var(--text);margin-bottom:4px}
+
+/* ===== detail drawer chart ===== */
+.detail-body{padding:0;display:flex;flex-direction:column}
+.detail-head{
+  padding:22px 24px 18px;
+  display:flex;flex-direction:column;gap:6px;
+  border-bottom:.5px solid var(--line);
+}
+.detail-head .dh-row{
+  display:flex;align-items:center;justify-content:space-between;
+}
+.detail-head .d-label{
+  display:flex;align-items:center;gap:8px;
+  font-size:14px;color:var(--sub);font-weight:500;
+}
+.detail-head .d-label .d-ico{
+  width:30px;height:30px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;color:#fff;
+}
+.detail-head .d-label .d-ico svg{width:16px;height:16px}
+.detail-head .d-value{
+  font-size:48px;font-weight:700;letter-spacing:-.03em;
+  line-height:1;margin-top:8px;
+  display:flex;align-items:baseline;gap:8px;
+  font-variant-numeric:tabular-nums;
+}
+.detail-head .d-value .unit{font-size:22px;font-weight:600;color:var(--sub)}
+.detail-head .d-meta{
+  display:flex;gap:14px;font-size:12px;color:var(--sub);
+  margin-top:10px;
+}
+.range-tabs{
+  display:flex;gap:6px;padding:14px 24px 0;
+  border-bottom:.5px solid var(--line);
+}
+.range-tabs button{
+  padding:8px 14px;border-radius:10px;
+  font-size:13px;font-weight:600;color:var(--sub);
+  background:transparent;
+  transition:background var(--t-fast),color var(--t-fast);
+}
+.range-tabs button:hover{background:var(--card-2);color:var(--text)}
+.range-tabs button.active{background:var(--text);color:var(--bg)}
+.chart-wrap{flex:1;min-height:340px;padding:12px 12px 18px;position:relative}
+.chart-wrap>div{width:100%;height:100%;min-height:340px}
+.stats-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+  background:var(--line);border-top:.5px solid var(--line);
+}
+.stats-grid .stat{
+  background:var(--bg);padding:14px 18px;
+}
+.stats-grid .stat .lbl{font-size:12px;color:var(--sub);margin-bottom:4px}
+.stats-grid .stat .val{
+  font-size:18px;font-weight:600;
+  font-variant-numeric:tabular-nums;
+}
+
+/* toast */
+#toast-root{
+  position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
+  z-index:200;
+  display:flex;flex-direction:column;gap:8px;
+  pointer-events:none;
+}
+.toast{
+  padding:11px 18px;
+  background:var(--text);color:var(--bg);
+  border-radius:12px;
+  font-size:14px;font-weight:500;
+  box-shadow:var(--shadow-lg);
+  animation:toastIn .25s var(--t-med);
+  pointer-events:auto;
+}
+.toast.err{background:var(--err);color:#fff}
+.toast.ok{background:var(--ok);color:#fff}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes fadeOut{to{opacity:0;transform:translateY(10px)}}
+.toast.out{animation:fadeOut .25s var(--t-med) forwards}
+
+/* modal */
+.modal-mask{
+  position:fixed;inset:0;z-index:150;
+  background:rgba(0,0,0,.5);
+  display:none;align-items:center;justify-content:center;
+  padding:20px;
+}
+.modal-mask.open{display:flex;animation:fadeIn .15s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{
+  background:var(--bg);
+  border-radius:var(--radius-l);
+  width:min(520px,100%);
+  max-height:90vh;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  box-shadow:var(--shadow-lg);
+  animation:modalIn .25s var(--t-med);
+}
+@keyframes modalIn{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
+.modal-head{
+  padding:18px 22px;border-bottom:.5px solid var(--line);
+  display:flex;align-items:center;gap:10px;
+}
+.modal-head h3{font-size:17px;font-weight:600;flex:1}
+.modal-body{padding:20px 22px;overflow-y:auto;font-size:14px;line-height:1.55;color:var(--text)}
+.modal-body h4{font-size:15px;margin:14px 0 6px}
+.modal-body ol{padding-left:20px;margin:6px 0}
+.modal-body ol li{margin-bottom:6px}
+.modal-body code{
+  font-family:var(--mono);font-size:12px;
+  background:var(--card-2);padding:2px 6px;border-radius:5px;
+  color:var(--ter);
+}
+.modal-foot{
+  padding:14px 22px;border-top:.5px solid var(--line);
+  display:flex;justify-content:flex-end;gap:10px;
+}
+
+/* first-run */
+.first-run-step{
+  display:flex;align-items:center;gap:10px;
+  margin:14px 0;font-size:14px;
+}
+.first-run-step .step-num{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--info);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:13px;flex-shrink:0;
+}
+.first-run-step .step-body{flex:1;color:var(--text);line-height:1.5}
+.first-run-step .step-body b{display:block;margin-bottom:2px}
+
+/* responsive */
+@media (max-width:720px){
+  .topbar{padding:12px 14px;gap:8px;flex-wrap:wrap}
+  .topbar .logo{font-size:15px}
+  .topbar .info{font-size:12px}
+  main{padding:0 14px;margin-top:14px}
+  #alert-bar{margin:14px 14px 0;padding:11px 14px;font-size:13px}
+  .fields-grid{grid-template-columns:repeat(auto-fill, minmax(160px,1fr));gap:10px;padding:14px}
+  .group-head{padding:14px 16px}
+  .field{padding:14px 14px 12px}
+  .field .value{font-size:30px}
+  .section-title{font-size:19px}
+  .empty{padding:40px 20px}
+  .detail-head{padding:18px 18px 14px}
+  .detail-head .d-value{font-size:36px}
+  .range-tabs{padding:10px 14px 0}
+  .range-tabs button{padding:7px 11px;font-size:12px}
+  .chart-wrap{padding:8px 8px 12px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .stats-grid .stat{padding:10px 12px}
+  .stats-grid .stat .val{font-size:15px}
+}
+@media (max-width:420px){
+  .topbar .info .poll{display:none}
+}
+
+/* scrollbar */
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--sub)}
+
+/* utilities */
+.row{display:flex;align-items:center;gap:8px}
+.col{display:flex;flex-direction:column;gap:4px}
+.flex1{flex:1}
+.hidden{display:none!important}
+.spin{animation:spin 1s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- ============ TOP BAR ============ -->
+<header class="topbar">
+  <div class="logo">
+    <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#0A84FF,#5E5CE6)">
+      <i data-lucide="activity" style="width:18px;height:18px;color:#fff"></i>
+    </span>
+    <span>物联网数据监测</span>
+    <span class="badge">EzData2</span>
+  </div>
+  <div class="spacer"></div>
+  <div class="info" id="status-info">
+    <span class="dot"></span>
+    <span class="poll" id="status-text">连接中…</span>
+    <button class="iv-btn" id="status-iv" title="点击修改刷新间隔">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      <span id="status-iv-text">--</span>
+    </button>
+  </div>
+  <button class="icon-btn" id="refresh-btn" title="刷新全部">
+    <i data-lucide="refresh-ccw"></i>
+  </button>
+  <button class="icon-btn" id="theme-btn" title="切换主题">
+    <i data-lucide="moon"></i>
+  </button>
+  <button class="icon-btn" id="admin-btn" title="管理数据源">
+    <i data-lucide="settings"></i>
+  </button>
+</header>
+
+<!-- ============ ALERT BAR ============ -->
+<div id="alert-bar">
+  <span class="a-icon"><i data-lucide="wifi-off" style="width:16px;height:16px"></i></span>
+  <div class="a-text" id="alert-text"></div>
+  <button class="icon-btn" id="alert-close" title="关闭">
+    <i data-lucide="x" style="width:18px;height:18px"></i>
+  </button>
+</div>
+
+<!-- ============ MAIN ============ -->
+<main id="main">
+  <div id="empty-state" class="empty">
+    <div class="e-icon">
+      <i data-lucide="radar"></i>
+    </div>
+    <h2>开始监测你的物联网数据</h2>
+    <p>添加你想监测的字段，每个字段独立鉴权。后台只能读你明确指定的那几个数据点。</p>
+    <div class="btn-row">
+      <button class="btn" id="empty-add">
+        <i data-lucide="plus"></i> 添加字段
+      </button>
+      <button class="btn secondary" id="empty-help">
+        <i data-lucide="help-circle"></i> 如何获取 dataToken
+      </button>
+    </div>
+  </div>
+
+  <div id="groups-container" class="hidden"></div>
+</main>
+
+<!-- ============ ADMIN DRAWER ============ -->
+<aside class="drawer-mask" id="admin-mask"></aside>
+<aside class="drawer" id="admin-drawer" aria-label="管理">
+  <div class="drawer-head">
+    <button class="icon-btn" id="admin-close">
+      <i data-lucide="x"></i>
+    </button>
+    <h3>数据源管理</h3>
+    <button class="icon-btn" id="admin-help" title="帮助">
+      <i data-lucide="help-circle"></i>
+    </button>
+  </div>
+  <div class="drawer-body" id="admin-body">
+    <!-- rendered dynamically -->
+  </div>
+  <div class="drawer-foot">
+    <!-- 默认空，被 showFormDrawer / promptGroupEdit 等覆盖 -->
+  </div>
+</aside>
+
+<!-- ============ DETAIL DRAWER ============ -->
+<aside class="drawer-mask" id="detail-mask"></aside>
+<aside class="drawer wide" id="detail-drawer" aria-label="趋势详情">
+  <div class="drawer-head">
+    <button class="icon-btn" id="detail-close">
+      <i data-lucide="arrow-left"></i>
+    </button>
+    <h3 id="detail-title">趋势详情</h3>
+    <div style="flex:1"></div>
+    <button class="icon-btn" id="detail-refresh" title="刷新">
+      <i data-lucide="refresh-ccw"></i>
+    </button>
+  </div>
+  <div class="detail-body" id="detail-body"></div>
+</aside>
+
+<!-- ============ MODAL ============ -->
+<div class="modal-mask" id="modal-mask">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-title">提示</h3>
+      <button class="icon-btn" id="modal-close">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-foot" id="modal-foot"></div>
+  </div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div id="toast-root"></div>
+
+<script>
+/* =========================================================================
+ * EzData2 Dashboard - Application
+ * Single-file vanilla JS. No build step, no framework, no server.
+ * Dependencies (loaded via CDN): ECharts 5.5, Lucide icons
+ * ========================================================================= */
+(function(){
+'use strict';
+
+// ===== CONSTANTS =====
+const STORAGE_KEY = 'ezdata-dashboard:config';
+const EZ_BASE = 'https://ezdata2.m5stack.com';
+const DEVICE_OFFLINE_THRESHOLD_MS = 90 * 1000;  // 设备心跳 90s 失败即离线
+const DATA_AGE_OFFLINE_MS = 10 * 60 * 1000;     // 数据陈旧 10 分钟兜底
+
+// ===== ADMIN GATE（部署到 GitHub Pages 时启用的硬编码口令哈希；前端方案仅防误点）=====
+const ADMIN_TOKEN_HASH = '87965ca8c84e5d52514adccbc4205901c377578a4dbed8bc48bccdaed57a8ae9';
+
+const PALETTE = [
+  '#FF9F0A','#0A84FF','#34C759','#FF3B30',
+  '#AF52DE','#FF2D55','#FFCC00','#5AC8FA','#5856D6'
+];
+
+const FIELD_ICONS = {
+  temperature:'thermometer', humidity:'droplets', pressure:'gauge',
+  light:'sun', voltage:'zap', current:'activity', co2:'cloud',
+  pm25:'wind', weight:'scale', distance:'ruler', motion:'move',
+  default:'circle-dot'
+};
+
+const GROUP_ICONS = ['home','sofa','bed','thermometer','warehouse','tree-pine','factory','building','server','cpu','box','package'];
+
+// 内置字段：访客打开即可查看；管理员在 #admin 后台可增删
+const DEFAULT_CONFIG = {
+  version: 2,
+  theme: 'auto',
+  pollIntervalSec: 60,
+  reportIntervalSec: 300,   // 设备上报 EzData2 的周期（秒），离线阈值据此推导
+  groups: [
+    {
+      id: 'g-stick-s3',
+      name: 'M5Stick S3',
+      icon: 'cpu',
+      fields: [
+        {
+          id: 'f-temperature',
+          name: '环境温度',
+          unit: '°C',
+          dataToken: '20923cad1b9c4bbbb50803655665fedd',
+          icon: 'thermometer',
+          color: '#FF9F0A',
+          min: -10, max: 60, warn: [15, 35]
+        },
+        {
+          id: 'f-humidity',
+          name: '环境湿度',
+          unit: '%',
+          dataToken: 'PLACEHOLDER_HUMIDITY_TOKEN',
+          icon: 'droplets',
+          color: '#0A84FF',
+          min: 0, max: 100, warn: [30, 80]
+        }
+      ]
+    }
+  ]
+};
+
+// ===== STATE =====
+const state = {
+  config: null,
+  live: {},        // dataToken -> { value, updateTime(真实上报时刻), lastSuccessAt, lastSeenUpdateTime, staleSince, error, history: [{t,v}] }
+  deviceHealth: {}, // groupId -> { online, lastCheck, latestUpdate, dataCount, ageMs, error }（由组内字段的真实 updateTime 推导，无需设备 Token）
+  charts: new Map(), // canvas-id -> ECharts instance
+  sparkCharts: new Map(), // dataToken -> ECharts instance
+  pollTimer: null,
+  offTickTimer: null,
+  sessionPollIntervalSec: 0,   // 会话级刷新间隔覆盖（0=用默认）。仅存内存，关闭页面即失效 → 重开恢复默认 60s
+  activeGroupId: null,
+  activeDetailFieldId: null,
+  detailRange: '1h',
+  detailChart: null,
+  isAdmin: false,    // 管理员已解锁（仅当前会话）
+};
+
+// ===== STORAGE =====
+const storage = {
+  load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+      const cfg = JSON.parse(raw);
+      const merged = Object.assign(JSON.parse(JSON.stringify(DEFAULT_CONFIG)), cfg);
+      // 兼容旧版：早期版本轮询为 10s，localStorage 里的旧值会盖掉新默认；此值无设置界面，<30s 一律升级为默认
+      if(!cfg.pollIntervalSec || cfg.pollIntervalSec < 30){
+        merged.pollIntervalSec = DEFAULT_CONFIG.pollIntervalSec;
+      }
+      // 部署到 GitHub Pages：本地若 groups 为空，使用内置默认字段
+      if(!Array.isArray(cfg.groups) || cfg.groups.length === 0){
+        merged.groups = JSON.parse(JSON.stringify(DEFAULT_CONFIG.groups));
+      }
+      return merged;
+    }catch(e){
+      console.warn('storage load fail', e);
+      return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    }
+  },
+  save(cfg){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
+    }catch(e){
+      toast('保存失败：localStorage 不可用', 'err');
+    }
+  }
+};
+
+// ===== HELPERS =====
+const $ = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+const uid = () => Math.random().toString(36).slice(2, 10);
+const escapeHtml = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+  '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+}[c]));
+
+const fmtVal = (v, decimals=1) => {
+  if(v == null || v === '' || isNaN(v)) return '--';
+  const num = Number(v);
+  if(isNaN(num)) return String(v);
+  if(Math.abs(num) >= 1000) return num.toFixed(0);
+  return num.toFixed(decimals);
+};
+
+const fmtTime = ts => {
+  if(!ts) return '--';
+  const d = new Date(ts);
+  return d.toLocaleTimeString('zh-CN', {hour12:false});
+};
+
+const fmtDate = ts => {
+  if(!ts) return '--';
+  const d = new Date(ts);
+  return d.toLocaleDateString('zh-CN', {month:'2-digit', day:'2-digit'});
+};
+
+const fmtRelative = ts => {
+  if(!ts) return '--';
+  const d = Math.floor((Date.now() - ts) / 1000);
+  if(d < 0) return '刚刚';
+  if(d < 60) return d + '秒前';
+  if(d < 3600) return Math.floor(d/60) + '分钟前';
+  if(d < 86400) return Math.floor(d/3600) + '小时前';
+  return Math.floor(d/86400) + '天前';
+};
+
+const fmtDuration = secs => {
+  if(secs < 60) return secs + '秒';
+  if(secs < 3600) return Math.floor(secs/60) + '分' + (secs%60? secs%60 + '秒':'');
+  return Math.floor(secs/3600) + '时' + Math.floor((secs%3600)/60) + '分';
+};
+
+const pickIcon = name => {
+  const lower = (name||'').toLowerCase();
+  for(const k in FIELD_ICONS){
+    if(lower.includes(k)) return FIELD_ICONS[k];
+  }
+  return FIELD_ICONS.default;
+};
+
+const pickColor = existing => existing || PALETTE[Math.floor(Math.random()*PALETTE.length)];
+
+const deepClone = obj => JSON.parse(JSON.stringify(obj));
+
+// ===== EZDATA2 CLIENT =====
+const api = {
+  async shareItem(dataToken){
+    const url = `${EZ_BASE}/api/v2/shareItemData/${encodeURIComponent(dataToken)}`;
+    const r = await fetch(url, { method:'GET', cache:'no-store' });
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    if(j.code != 200) throw new Error(j.msg || 'API returned ' + j.code);
+    return j.data;
+  },
+  async dataHistory(dataToken){
+    // 该接口必须同时传 id= 和 dataToken=，且 id 等于 dataToken 的记录 id（实测）
+    const url = `${EZ_BASE}/api/v2/dataHistory?id=${encodeURIComponent(dataToken)}&dataToken=${encodeURIComponent(dataToken)}&sourceId=`;
+    const r = await fetch(url, { method:'GET', cache:'no-store' });
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    if(j.code != 200) throw new Error(j.msg || 'API code=' + j.code);
+    return Array.isArray(j.data) ? j.data : [];
+  },
+  extractToken(input){
+    if(!input) return '';
+    input = String(input).trim();
+    // if URL, extract token
+    const m = input.match(/[?&](?:dataToken|groupToken|token)=([a-zA-Z0-9]+)/i);
+    if(m) return m[1];
+    // bare token (no colons, hex32 or hex32+)
+    const t = input.match(/[a-fA-F0-9]{20,}/);
+    if(t) return t[0];
+    return input;
+  }
+};
+
+// ===== ICONS (Lucide) =====
+function renderIcons(){
+  if(window.lucide && window.lucide.createIcons){
+    try{ window.lucide.createIcons(); }catch(e){}
+  }
+}
+
+// ===== ADMIN GATE =====
+async function sha256Hex(text){
+  const buf = new TextEncoder().encode(text);
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+async function promptAdminLogin(){
+  if(state.isAdmin) return true;
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+    <p style="margin:0 0 12px">请输入管理员口令以管理数据源。</p>
+    <div style="display:flex;gap:8px">
+      <input id="admin-pwd" type="password" placeholder="管理员口令" autocomplete="off" style="flex:1;padding:9px 12px;border:1px solid var(--line-2);border-radius:8px;background:var(--card-2);color:var(--text);font-size:14px">
+      <button class="btn" id="admin-go">解锁</button>
+    </div>
+    <div class="help" style="margin-top:10px">🔒 该口令哈希硬编码在仓库内，前端方案仅防误点，无法阻止查看源代码。</div>
+  `;
+  return new Promise((resolve) => {
+    const tryUnlock = async () => {
+      const v = ($('#admin-pwd')||{}).value || '';
+      const h = await sha256Hex(v);
+      if(h === ADMIN_TOKEN_HASH){
+        state.isAdmin = true;
+        $('#modal-mask').classList.remove('open');
+        toast('管理员已解锁', 'ok');
+        resolve(true);
+      } else {
+        toast('口令错误', 'err');
+        resolve(false);
+      }
+    };
+    modal({ title:'🔐 管理员鉴权', body: wrap, buttons:[{label:'取消', kind:'ghost', value:'cancel'}] })
+      .then(v => { if(v === 'cancel') resolve(false); });
+    setTimeout(() => {
+      const input = $('#admin-pwd');
+      const btn = $('#admin-go');
+      if(input) input.focus();
+      if(btn) btn.onclick = tryUnlock;
+      if(input) input.onkeydown = (e) => { if(e.key === 'Enter') tryUnlock(); };
+    }, 0);
+  });
+}
+function tryAdminOpen(){
+  promptAdminLogin().then(ok => { if(ok) openAdmin(); });
+}
+function maybeShowAdminBtn(){
+  // 仅当管理员已解锁（会话内）时显示齿轮；访客看不到
+  $('#admin-btn').style.display = state.isAdmin ? '' : 'none';
+}
+function toast(msg, type=''){
+  const root = $('#toast-root');
+  const el = document.createElement('div');
+  el.className = 'toast' + (type ? ' ' + type : '');
+  el.textContent = msg;
+  root.appendChild(el);
+  setTimeout(() => {
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 250);
+  }, type === 'err' ? 3500 : 2200);
+}
+
+// ===== MODAL =====
+function modal({title, body, buttons}){
+  return new Promise(resolve => {
+    $('#modal-title').textContent = title || '提示';
+    const bodyEl = $('#modal-body');
+    bodyEl.innerHTML = '';
+    if(typeof body === 'string') bodyEl.innerHTML = body;
+    else if(body instanceof Node) bodyEl.appendChild(body);
+    const footEl = $('#modal-foot');
+    footEl.innerHTML = '';
+    (buttons || [{label:'知道了', value:null}]).forEach(b => {
+      const btn = document.createElement('button');
+      btn.className = 'btn ' + (b.kind || 'secondary');
+      btn.textContent = b.label;
+      btn.onclick = () => {
+        $('#modal-mask').classList.remove('open');
+        resolve(b.value);
+      };
+      footEl.appendChild(btn);
+    });
+    $('#modal-mask').classList.add('open');
+  });
+}
+
+// ===== THEME =====
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  state.config.theme = t;
+  storage.save(state.config);
+  // update theme icon
+  const ico = $('#theme-btn i');
+  if(ico){
+    ico.setAttribute('data-lucide',
+      t === 'light' ? 'sun' :
+      t === 'dark' ? 'moon' :
+      'circle-half');
+    renderIcons();
+  }
+  // refresh open detail chart if any
+  if(state.detailChart){ refreshDetailChart(); }
+  // refresh all sparkline charts (colors may change)
+  state.sparkCharts.forEach(c => { try{ c.resize(); c.setOption(getSparkOption(c.getOption().__baseData || [], true)); }catch(e){} });
+}
+function nextTheme(){
+  const order = ['auto','light','dark'];
+  const cur = state.config.theme || 'auto';
+  applyTheme(order[(order.indexOf(cur)+1) % order.length]);
+  toast('已切换：' + ({auto:'跟随系统', light:'浅色', dark:'深色'}[state.config.theme]));
+}
+
+// ===== STATUS BAR =====
+function updateStatusBar(){
+  const total = countTotalFields();
+  const iv = getPollIntervalSec();
+  $('#status-iv-text').textContent = iv === DEFAULT_CONFIG.pollIntervalSec ? `${iv}s` : `${iv}s*`;
+  if(total === 0){
+    $('#status-info').classList.add('off');
+    $('#status-text').textContent = '未配置';
+    return;
+  }
+  const onlineCount = countOnlineFields();
+  if(onlineCount === total){
+    $('#status-info').classList.remove('off');
+    $('#status-text').textContent = `${onlineCount}/${total} 在线`;
+  } else if(onlineCount === 0){
+    $('#status-info').classList.add('off');
+    $('#status-text').textContent = `全部离线 (0/${total})`;
+  } else {
+    $('#status-info').classList.add('off');
+    $('#status-text').textContent = `${onlineCount}/${total} 在线`;
+  }
+}
+
+// ===== POLL INTERVAL（会话级，不持久化；下拉选框） =====
+function closeIvMenu(){
+  const m = $('#iv-menu');
+  if(m) m.remove();
+  document.removeEventListener('pointerdown', onIvMenuOutside, true);
+  window.removeEventListener('scroll', closeIvMenu, true);
+  window.removeEventListener('resize', closeIvMenu);
+  window.removeEventListener('keydown', onIvMenuKey, true);
+}
+function onIvMenuOutside(e){
+  if(!e.target.closest('#iv-menu') && !e.target.closest('#status-iv')) closeIvMenu();
+}
+function onIvMenuKey(e){ if(e.key === 'Escape') closeIvMenu(); }
+function applyPollInterval(raw){
+  const sec = Math.round(Number(raw));
+  if(!(sec >= 10 && sec <= 3600)){ toast('请输入 10 ~ 3600 之间的秒数', 'err'); return false; }
+  state.sessionPollIntervalSec = sec;
+  if(countTotalFields() > 0) startPolling();
+  updateStatusBar();
+  toast(`刷新间隔已设为 ${sec}s（本次会话）`, 'ok');
+  return true;
+}
+function toggleIvMenu(){
+  if($('#iv-menu')){ closeIvMenu(); return; }
+  const cur = getPollIntervalSec();
+  const presets = [30, 60, 120, 300];
+  const menu = document.createElement('div');
+  menu.id = 'iv-menu';
+  menu.className = 'iv-menu';
+  menu.innerHTML = `
+    ${presets.map(s => `
+      <button class="iv-opt${s===cur?' on':''}" data-iv="${s}">
+        <span>${s}s${s===DEFAULT_CONFIG.pollIntervalSec?'<em>默认</em>':''}</span>
+        ${s===cur?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>':''}
+      </button>`).join('')}
+    <div class="iv-custom">
+      <input id="iv-custom" type="number" min="10" max="3600" placeholder="自定义 10~3600 秒" value="${presets.includes(cur)?'':cur}">
+      <button class="iv-go" id="iv-apply">应用</button>
+    </div>
+    <div class="iv-note">仅本次会话有效，重开网页恢复 ${DEFAULT_CONFIG.pollIntervalSec}s；过快刷新会给 EzData2 造成压力</div>
+  `;
+  document.body.appendChild(menu);
+  const r = $('#status-iv').getBoundingClientRect();
+  menu.style.top = (r.bottom + 8) + 'px';
+  menu.style.left = Math.max(8, r.right - menu.offsetWidth) + 'px';
+  menu.querySelectorAll('.iv-opt').forEach(b => b.onclick = () => {
+    if(applyPollInterval(b.dataset.iv)) closeIvMenu();
+  });
+  const input = $('#iv-custom');
+  const go = () => { if(applyPollInterval(input.value)) closeIvMenu(); };
+  $('#iv-apply').onclick = go;
+  input.onkeydown = (e) => { if(e.key === 'Enter') go(); };
+  setTimeout(() => input.focus(), 0);
+  document.addEventListener('pointerdown', onIvMenuOutside, true);
+  window.addEventListener('scroll', closeIvMenu, true);
+  window.addEventListener('resize', closeIvMenu);
+  window.addEventListener('keydown', onIvMenuKey, true);
+}
+
+// ===== ALERT BAR =====
+function updateAlertBar(){
+  const bar = $('#alert-bar');
+  const txt = $('#alert-text');
+  const total = countTotalFields();
+  if(total === 0){ bar.classList.remove('show'); return; }
+  const offs = collectOfflineFields();
+  if(offs.length === 0){ bar.classList.remove('show'); return; }
+  if(offs.length <= 2){
+    txt.innerHTML = offs.map(o =>
+      `<strong>${escapeHtml(o.groupName)} · ${escapeHtml(o.label)}</strong> 已离线 ${fmtDuration(Math.floor((Date.now()-o.lastSuccessAt)/1000))}`
+    ).join(' · ');
+  } else {
+    txt.innerHTML = `<strong>${offs.length} 个字段离线</strong>，最近：${offs.slice(0,3).map(o=>escapeHtml(o.groupName)+'·'+escapeHtml(o.label)).join('、')} 等`;
+  }
+  bar.classList.add('show');
+}
+
+// ===== COUNT =====
+function countTotalFields(){
+  return state.config.groups.reduce((s,g)=>s+g.fields.length, 0);
+}
+function countOnlineFields(){
+  let n = 0;
+  state.config.groups.forEach(g => g.fields.forEach(f => {
+    const live = state.live[f.dataToken];
+    if(live && !isFieldOffline(f, live)) n++;
+  }));
+  return n;
+}
+function collectOfflineFields(){
+  const out = [];
+  state.config.groups.forEach(g => g.fields.forEach(f => {
+    const live = state.live[f.dataToken];
+    if(live && isFieldOffline(f, live)){
+      out.push({
+        groupName: g.name,
+        label: f.label,
+        lastSuccessAt: live.updateTime || live.lastSuccessAt
+      });
+    }
+  }));
+  return out;
+}
+function getGroupOfField(field){
+  for(const g of state.config.groups){
+    if(g.fields.includes(field)) return g;
+  }
+  return null;
+}
+
+// 离线判定基准 = EzData2 记录的真实 updateTime（STICK S3 上报时刻，非网页读取时刻）
+// 阈值按设备真实上报周期自适应（优先用 dataHistory 历史自动学习的周期，配置值兜底）：
+//   数据停止(stale) = 距最新上报 > 上报周期 + 60s（漏 1 期）
+//   离线(offline)   = 距最新上报 > 2 × 上报周期 + 120s（漏 2 期，排除单次网络抖动）
+// 例：5 分钟上报 → stale >6min，offline >12min；1 分钟上报 → stale >2min，offline >4.5min
+function reportIntervalMs(live){
+  if(live && live.reportIntervalMs) return live.reportIntervalMs;
+  return ((state.config && state.config.reportIntervalSec) || 300) * 1000;
+}
+function fieldStaleMs(live){ return reportIntervalMs(live) + 60 * 1000; }
+function fieldOfflineMs(live){ return reportIntervalMs(live) * 2 + 120 * 1000; }
+
+function isFieldOffline(field, live){
+  if(!live) return false;
+  // 1) 真实上报时间距今超过阈值 → 离线（核心判据：服务器时间，不随网页刷新复位）
+  if(live.updateTime && (Date.now() - live.updateTime) > fieldOfflineMs(live)) return true;
+  // 2) dataHistory 持续拉取失败（网络断 / token 失效）
+  if(live.error && (Date.now() - (live.lastSuccessAt || 0)) > fieldOfflineMs(live)) return true;
+  return false;
+}
+
+// 三态：online / stale / offline
+function getFieldState(field, live){
+  if(!live) return 'online';
+  if(isFieldOffline(field, live)) return 'offline';
+  if(live.updateTime && (Date.now() - live.updateTime) > fieldStaleMs(live)) return 'stale';
+  return 'online';
+}
+
+function getLastOfflineReason(field, live){
+  if(live && live.updateTime){
+    const gap = Math.floor((Date.now() - live.updateTime) / 1000);
+    if((Date.now() - live.updateTime) > fieldOfflineMs(live)) return `上报已停止 ${fmtDuration(gap)}`;
+  }
+  if(live && live.error) return live.error;
+  return '无数据';
+}
+
+// ===== POLLING LOOP =====
+// ----- 数据轮询（纯 HTTP，dataHistory 通道） -----
+// 根源结论（2026-08-20 实测）：
+//   ① shareItemData / shareGroupData 只返回 {name,value}，完全没有时间字段
+//   ② dataHistory?id={tk}&dataToken={tk}&sourceId= 返回完整记录：
+//      { dataToken, name, value, createTime, updateTime } —— updateTime 即设备真实上报时刻
+//   ③ WS CMD 103 虽也带真实时间，但网页与 STICK S3 设备共用同一 deviceToken 长连接会被服务端互踢，
+//      导致设备掉线、数据断流（历史记录 21:07→22:08 断档即为互踢实锤）→ 网页端弃用 WS
+// 从 history 时间差自动学习上报周期（每个字段独立），支持设备改周期后动态调整：
+//  - 基准 = 最近 12 个有效间隔的中位数（抗单次断档/补报干扰）
+//  - 变慢立即采纳：最新一个间隔 > 2×当前估计 → 估计直接上调
+//    （如设备从 60s 改成 300s：第一个 300s 间隔落地即切换，不误报离线）
+//  - 变快延迟确认：中位数 < 当前估计的一半 → 才下调（连续多个短间隔才生效）
+function learnReportInterval(hist, prevMs){
+  if(!hist || hist.length < 4) return prevMs || null;
+  const deltas = [];                     // 从新到旧收集
+  for(let i = hist.length - 1; i >= 1 && deltas.length < 12; i--){
+    const d = hist[i].t - hist[i-1].t;
+    if(d > 20 * 1000 && d < 2 * 3600 * 1000) deltas.push(d); // 忽略抖动 / 超2h断档
+  }
+  if(deltas.length < 3) return prevMs || null;
+  const latest = deltas[0];              // 最近一个间隔
+  const sorted = [...deltas].sort((a,b) => a - b);
+  const median = sorted[Math.floor(sorted.length / 2)];
+  if(prevMs){
+    if(latest > prevMs * 2) return latest;        // 设备变慢：立即采纳新周期
+    if(latest < prevMs / 2 && median < prevMs / 2) return median; // 变快：最新+中位数双双确认才下调（防过渡期震荡）
+    return median > prevMs ? median : prevMs;     // 小幅上抬采纳、小幅回落保持（保守防抖）
+  }
+  return median;
+}
+// 周期显示格式：<3min 用秒，≥3min 用分钟
+function fmtInterval(ms){
+  if(!ms) return '--';
+  return ms >= 180 * 1000 ? Math.round(ms / 60000) + 'min' : Math.round(ms / 1000) + 's';
+}
+
+// 把 dataHistory 返回的记录合并进 state.live[tk]：
+// 重建 history（真实 t）、写当前值 + 真实 updateTime、推进陈旧检测
+function mergeHistoryIntoLive(tk, records){
+  const live = state.live[tk] || (state.live[tk] = { history: [] });
+  const pts = [];
+  for(const h of (records || [])){
+    const t = parseServerTime(h.updateTime || h.createTime);
+    const v = parseFloat(h.value);
+    if(!isNaN(t) && !isNaN(v)) pts.push({ t, v });
+  }
+  if(pts.length === 0) return live;
+  pts.sort((a,b) => a.t - b.t);
+  // 按 t 去重，只保留最新 200 个点
+  const seen = new Set();
+  const hist = [];
+  for(const p of pts){
+    if(seen.has(p.t)) continue;
+    seen.add(p.t);
+    hist.push(p);
+  }
+  live.history = hist.slice(-200);
+  // 自动学习上报周期（带动态调整：变慢立即采纳、变快中位数确认）
+  const learned = learnReportInterval(live.history, live.reportIntervalMs);
+  if(learned) live.reportIntervalMs = learned;
+  // 最后一个点 = 当前值，t = 真实上报时间（不是网页读取时刻）
+  const latest = live.history[live.history.length - 1];
+  const prevVal = (typeof live.value === 'number') ? live.value : null;
+  live.value = latest.v;
+  live.updateTime = latest.t;
+  live.error = null;
+  if(prevVal !== null) live.delta = latest.v - prevVal;
+  // 陈旧检测：真实上报时间是否前进
+  if(live.lastSeenUpdateTime && latest.t <= live.lastSeenUpdateTime){
+    if(!live.staleSince) live.staleSince = Date.now();
+  } else {
+    live.lastSeenUpdateTime = latest.t;
+    live.staleSince = null;
+  }
+  return live;
+}
+
+// 轮询：字段级 dataHistory（值+真实时间+历史一次拿全），再推导设备级健康
+async function pollOnce(){
+  const groups = state.config.groups;
+  const allFields = [];
+  groups.forEach(g => g.fields.forEach(f => allFields.push({f, g})));
+  if(allFields.length === 0){ updateStatusBar(); return; }
+
+  // ---- Phase 1: 每字段 dataHistory ----
+  const tasks = allFields.map(({f}) =>
+    api.dataHistory(f.dataToken).then(records => {
+      const live = mergeHistoryIntoLive(f.dataToken, records);
+      live.lastSuccessAt = Date.now();
+      // 同步刷新迷你趋势图
+      const chart = state.sparkCharts.get(f.dataToken);
+      if(chart){
+        chart.setOption({ xAxis:{data: live.history.map(p=>p.t)}, series:[{data: live.history.map(p=>p.v)}] });
+      }
+    }).catch(err => {
+      const live = state.live[f.dataToken] || (state.live[f.dataToken] = { history: [] });
+      live.error = err.message || 'fetch failed';
+      if(!live.staleSince) live.staleSince = Date.now();
+    })
+  );
+  await Promise.allSettled(tasks);
+
+  // ---- Phase 2: 设备级健康 = 任一字段真实 updateTime 在其**自身学到的阈值**内即在线 ----
+  // 判定数据 100% 来自组内字段的 dataHistory（shareGroupData 无时间字段，证不了"设备活着"，故弃用；
+  // deviceToken 亦不再需要——在线判定与它无关，这里按分组 id 记录健康状态）
+  groups.forEach(g => {
+    if(g.fields.length === 0) return;
+    let maxTs = 0, okFields = 0, liveFieldCount = 0;
+    g.fields.forEach(f => {
+      const live = state.live[f.dataToken];
+      if(!live || !live.updateTime) return;
+      okFields++;
+      const age = Date.now() - live.updateTime;
+      // 字段级阈值：优先用学到的周期，配置兜底
+      const offMs = fieldOfflineMs(live);
+      if(age < offMs) liveFieldCount++;
+      if(live.updateTime > maxTs) maxTs = live.updateTime;
+    });
+    if(okFields === 0){
+      state.deviceHealth[g.id] = { online:false, lastCheck:Date.now(), error:'暂无有效数据' };
+    } else {
+      const ageMs = Date.now() - maxTs;
+      state.deviceHealth[g.id] = {
+        online: liveFieldCount > 0,                       // 任一字段在自己阈值内 → 在线
+        lastCheck: Date.now(),
+        latestUpdate: maxTs,
+        dataCount: okFields,
+        liveFieldCount,
+        ageMs,
+        error: liveFieldCount > 0 ? null : `设备数据停止于 ${fmtTime(maxTs)}`,
+      };
+    }
+  });
+
+  render();
+}
+
+function parseServerTime(s){
+  // 无效输入返回 NaN（绝不能 fallback 到 Date.now()，否则真实上报时间会被页面时刻污染）
+  if(s === undefined || s === null || s === '') return NaN;
+  // '2026-08-20 14:43:56.031'（GMT+8 字符串）or epoch ms / s
+  if(typeof s === 'number') return s < 1e12 ? s*1000 : s;
+  const cleaned = String(s).replace(' ', 'T');
+  const t = new Date(cleaned).getTime();
+  return isNaN(t) ? NaN : t;
+}
+
+// 生效的刷新间隔：会话级覆盖优先，否则用配置默认（默认不落盘持久化用户临时修改）
+function getPollIntervalSec(){
+  return state.sessionPollIntervalSec > 0 ? state.sessionPollIntervalSec
+       : (state.config && state.config.pollIntervalSec) || DEFAULT_CONFIG.pollIntervalSec;
+}
+
+function startPolling(){
+  stopPolling();
+  pollOnce();
+  state.pollTimer = setInterval(pollOnce, getPollIntervalSec() * 1000);
+}
+function stopPolling(){
+  if(state.pollTimer){ clearInterval(state.pollTimer); state.pollTimer = null; }
+}
+
+function startOffTick(){
+  stopOffTick();
+  state.offTickTimer = setInterval(() => {
+    updateFieldCards();
+    updateStatusBar();
+    updateAlertBar();
+    if(state.activeDetailFieldId){
+      const f = findFieldById(state.activeDetailFieldId);
+      if(f){
+        const live = state.live[f.dataToken];
+        // update detail head value
+        const dv = $('.detail-head .d-value');
+        if(dv && live != null){
+          const numTxt = fmtVal(live.value, f.decimals ?? 1);
+          const numEl = dv.querySelector('.num');
+          if(numEl) numEl.textContent = numTxt;
+          const meta = $('.detail-head .d-meta');
+          if(meta){
+            meta.innerHTML = `
+              <span>更新于 ${fmtTime(live.updateTime)} (${fmtRelative(live.updateTime)})</span>
+              <span>状态 ${isFieldOffline(f, live) ? `<span style="color:var(--err)">离线 ${fmtDuration(Math.floor((Date.now()-live.updateTime)/1000))}</span>` : '<span style="color:var(--ok)">在线</span>'}</span>
+            `;
+          }
+        }
+      }
+    }
+  }, 1000);
+}
+function stopOffTick(){
+  if(state.offTickTimer){ clearInterval(state.offTickTimer); state.offTickTimer = null; }
+}
+
+// ===== RENDER =====
+function render(){
+  const total = countTotalFields();
+  if(total === 0){
+    $('#empty-state').classList.remove('hidden');
+    $('#groups-container').classList.add('hidden');
+  } else {
+    $('#empty-state').classList.add('hidden');
+    $('#groups-container').classList.remove('hidden');
+    renderGroups();
+  }
+  updateStatusBar();
+}
+
+function renderGroups(){
+  const root = $('#groups-container');
+  root.innerHTML = '';
+  state.config.groups.forEach(g => {
+    if(g.fields.length === 0) return;
+    const el = document.createElement('section');
+    el.className = 'group';
+    el.dataset.gid = g.id;
+    const onlineInGroup = g.fields.filter(f => {
+      const l = state.live[f.dataToken];
+      return l && !isFieldOffline(f, l);
+    }).length;
+    const allOnline = onlineInGroup === g.fields.length;
+    const allOffline = onlineInGroup === 0;
+    // 设备级状态（组内有字段即显示；判定数据来自字段 dataHistory 的真实 updateTime）
+    let deviceBadge = '';
+    if(g.fields.length > 0){
+      const dh = state.deviceHealth[g.id];
+      const status = dh ? (dh.online ? 'on' : 'off') : 'unknown';
+      const errMsg = dh && dh.error ? ` · ${dh.error}` : '';
+      const lastCheck = dh && dh.lastCheck ? fmtRelative(dh.lastCheck) : '未检测';
+      const latestData = dh && dh.latestUpdate ? ` · 设备数据 ${fmtTime(dh.latestUpdate)}` : '';
+      deviceBadge = `<span class="device-badge ${status}" title="心跳 ${lastCheck}${latestData}${errMsg}">
+        <i data-lucide="${status==='on'?'wifi':status==='off'?'wifi-off':'help-circle'}" style="width:11px;height:11px"></i>
+        设备${status==='on'?'在线':status==='off'?'离线':'未知'}
+      </span>`;
+    }
+    el.innerHTML = `
+      <header class="group-head">
+        <div class="g-icon" style="background:var(--card-2)">
+          <i data-lucide="${g.icon||'home'}"></i>
+        </div>
+        <div class="g-info">
+          <div class="g-name">${escapeHtml(g.name)}</div>
+          <div class="g-sub ${allOnline?'':'off'}">
+            <span class="g-status"><span class="dot"></span><span>${allOnline?'全部在线':allOffline?'全部离线':`${onlineInGroup}/${g.fields.length} 在线`}</span></span>
+            <span>·</span>
+            <span>${g.fields.length} 个字段</span>
+            ${deviceBadge}
+          </div>
+        </div>
+        <div class="g-actions">
+          <button class="icon-btn" data-act="add-field" data-gid="${g.id}" title="添加字段"><i data-lucide="plus"></i></button>
+          <button class="icon-btn" data-act="edit-group" data-gid="${g.id}" title="编辑"><i data-lucide="pencil"></i></button>
+          <button class="icon-btn" data-act="del-group" data-gid="${g.id}" title="删除"><i data-lucide="trash-2"></i></button>
+        </div>
+      </header>
+      <div class="fields-grid">
+        ${g.fields.map(f => renderFieldCard(f, g)).join('')}
+      </div>
+    `;
+    root.appendChild(el);
+  });
+  renderIcons();
+  // attach field click handlers
+  $$('[data-fid]', root).forEach(el => {
+    el.addEventListener('click', e => {
+      const fid = el.dataset.fid;
+      openDetail(fid);
+    });
+  });
+  // group action handlers
+  $$('[data-act]', root).forEach(el => {
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      const act = el.dataset.act;
+      const gid = el.dataset.gid;
+if(act === 'add-field') openFieldEditorFor(gid);
+    else if(act === 'edit-group'){
+      const g = state.config.groups.find(x=>x.id===gid);
+      if(g) promptGroupEdit(g);
+    }
+    else if(act === 'del-group') deleteGroup(gid);
+    });
+  });
+  // init sparklines
+  state.config.groups.forEach(g => g.fields.forEach(f => {
+    initSparkline(f.dataToken);
+  }));
+}
+
+function renderFieldCard(f, g){
+  const live = state.live[f.dataToken];
+  const state_ = getFieldState(f, live || {});
+  const offline = state_ === 'offline';
+  const stale = state_ === 'stale';
+  const value = offline || !live ? '--' : fmtVal(live.value, f.decimals ?? 1);
+  const delta = live && typeof live.delta === 'number' && !offline && !stale
+    ? `<span class="delta ${live.delta>0.001?'up':live.delta<-0.001?'down':'flat'}">
+        <i data-lucide="${live.delta>0.001?'trending-up':live.delta<-0.001?'trending-down':'minus'}"></i>
+        ${live.delta>0?'+':''}${live.delta.toFixed(f.decimals ?? 1)}
+       </span>` : '';
+  const icon = pickIcon(f.key);
+  // 把每个字段学到的上报周期以小字显示在卡片右上角（仅在有学习结果时）
+  const intervalHint = live && live.reportIntervalMs
+    ? `<span class="hint-pill" title="本字段上报周期约 ${fmtInterval(live.reportIntervalMs)}（自动学习，随设备改周期动态调整）">周期 ${fmtInterval(live.reportIntervalMs)}</span>`
+    : '';
+  return `
+    <article class="field ${offline?'offline':''} ${stale?'stale':''}" data-fid="${f.id}" title="点击查看趋势">
+      <div class="row1">
+        <div class="f-label">
+          <span class="f-icon" style="background:${f.color}"><i data-lucide="${icon}"></i></span>
+          ${escapeHtml(f.label)}
+        </div>
+        ${intervalHint}
+      </div>
+      <div class="value">
+        <span class="num">${escapeHtml(value)}</span>
+        <span class="unit">${escapeHtml(f.unit||'')}</span>
+        ${delta}
+      </div>
+      <div class="spark" id="spark-${f.dataToken}"></div>
+      <div class="footer-line">
+        ${offline ? `<span><span style="color:var(--sub)">最后上报 </span>${live?fmtTime(live.updateTime):'--'} <span style="color:var(--sub)">· ${live?fmtRelative(live.updateTime):'--'}</span></span>` : ''}
+        ${stale ? `<span><span style="color:var(--warn)">数据停止 </span>${live?fmtTime(live.updateTime):'--'}<span style="color:var(--warn)"> · 未变 ${Math.floor((Date.now()-live.staleSince)/1000)}s</span></span>` : ''}
+        ${(!offline && !stale) ? `<span><span style="color:var(--sub)">设备数据 </span>${live?fmtTime(live.updateTime):'--'}</span><span style="color:var(--sub)">${live?fmtRelative(live.updateTime):'--'}</span>` : ''}
+      </div>
+    </article>
+  `;
+}
+
+function updateFieldCards(){
+  // update each field card in-place without re-rendering the whole grid
+  state.config.groups.forEach(g => g.fields.forEach(f => {
+    const card = document.querySelector(`[data-fid="${f.id}"]`);
+    if(!card) return;
+    const live = state.live[f.dataToken];
+    const state_ = getFieldState(f, live || {});
+    const offline = state_ === 'offline';
+    const stale = state_ === 'stale';
+    card.classList.toggle('offline', offline);
+    card.classList.toggle('stale', stale && !offline);
+    const numEl = card.querySelector('.num');
+    if(numEl) numEl.textContent = offline || !live ? '--' : fmtVal(live.value, f.decimals ?? 1);
+
+    // delta badge
+    const valueEl = card.querySelector('.value');
+    if(valueEl){
+      const old = valueEl.querySelector('.delta');
+      if(old) old.remove();
+      if(live && typeof live.delta === 'number' && !offline && !stale){
+        const dEl = document.createElement('span');
+        dEl.className = 'delta ' + (live.delta > 0.001 ? 'up' : live.delta < -0.001 ? 'down' : 'flat');
+        dEl.innerHTML = `<i data-lucide="${live.delta>0.001?'trending-up':live.delta<-0.001?'trending-down':'minus'}"></i> ${live.delta>0?'+':''}${live.delta.toFixed(f.decimals ?? 1)}`;
+        valueEl.appendChild(dEl);
+        renderIcons();
+      }
+    }
+    // 卡片右上角的“周期”小药丸（每个字段自适应学习结果）
+    const row1 = card.querySelector('.row1');
+    if(row1){
+      const old = row1.querySelector('.hint-pill');
+      if(old) old.remove();
+      if(live && live.reportIntervalMs){
+        const span = document.createElement('span');
+        span.className = 'hint-pill';
+        span.title = `本字段上报周期约 ${fmtInterval(live.reportIntervalMs)}（自动学习，随设备改周期动态调整）`;
+        span.textContent = '周期 ' + fmtInterval(live.reportIntervalMs);
+        row1.appendChild(span);
+      }
+    }
+    // footer
+    const fl = card.querySelector('.footer-line');
+    if(fl){
+      if(offline){
+        fl.innerHTML = `<span><span style="color:var(--sub)">最后上报 </span>${live?fmtTime(live.updateTime):'--'} <span style="color:var(--sub)">· ${live?fmtRelative(live.updateTime):'--'}</span></span>`;
+      } else if(stale){
+        fl.innerHTML = `<span><span style="color:var(--warn)">数据停止 </span>${live?fmtTime(live.updateTime):'--'} <span style="color:var(--warn)">· 未变 ${live?Math.floor((Date.now()-live.staleSince)/1000):0}s</span></span>`;
+      } else {
+        fl.innerHTML = `<span><span style="color:var(--sub)">设备数据 </span>${live?fmtTime(live.updateTime):'--'}</span><span style="color:var(--sub)">${live?fmtRelative(live.updateTime):'--'}</span>`;
+      }
+    }
+    // group head status update
+    updateGroupHead(g);
+    // sparkline
+    refreshSparkline(f.dataToken, live);
+  }));
+}
+
+function updateGroupHead(g){
+  const head = document.querySelector(`section.group[data-gid="${g.id}"] .group-head`);
+  if(!head) return;
+  const onlineInGroup = g.fields.filter(f => {
+    const l = state.live[f.dataToken];
+    return l && !isFieldOffline(f, l);
+  }).length;
+  const allOnline = onlineInGroup === g.fields.length;
+  const allOffline = onlineInGroup === 0;
+  const sub = head.querySelector('.g-sub');
+  if(sub){
+    sub.classList.toggle('off', !allOnline);
+    const txt = sub.querySelector('.g-status span:last-child');
+    if(txt) txt.textContent = allOnline?'全部在线':allOffline?'全部离线':`${onlineInGroup}/${g.fields.length} 在线`;
+  }
+}
+
+// ===== SPARKLINE (ECharts mini) =====
+function getSparkOption(points, useThemeBase = false){
+  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches && state.config.theme !== 'light';
+  const textColor = isDark ? '#8E8E93' : '#8E8E93';
+  const axisColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+  return {
+    animation:false,
+    grid:{left:0, right:0, top:2, bottom:2},
+    xAxis:{type:'category', show:false, data: points.map(p=>p.t)},
+    yAxis:{type:'value', show:false, scale:true},
+    tooltip:{show:false},
+    series:[{
+      type:'line',
+      showSymbol:false,
+      smooth:true,
+      lineStyle:{width:2, color:'#0A84FF'},
+      areaStyle:{
+        color:{
+          type:'linear', x:0, y:0, x2:0, y2:1,
+          colorStops:[{offset:0, color:'rgba(10,132,255,0.32)'},{offset:1, color:'rgba(10,132,255,0)'}]
+        }
+      },
+      data: points.map(p=>p.v)
+    }]
+  };
+}
+
+function initSparkline(dataToken){
+  const el = document.getElementById('spark-' + dataToken);
+  if(!el) return;
+  const live = state.live[dataToken];
+  const pts = live && live.history ? live.history : [];
+  if(state.sparkCharts.has(dataToken)){
+    try{ state.sparkCharts.get(dataToken).dispose(); }catch(e){}
+  }
+  const chart = echarts.init(el, null, {renderer:'canvas'});
+  chart.setOption(getSparkOption(pts));
+  state.sparkCharts.set(dataToken, chart);
+}
+function refreshSparkline(dataToken, live){
+  const chart = state.sparkCharts.get(dataToken);
+  if(!chart) return;
+  const pts = live && live.history ? live.history : [];
+  chart.setOption({
+    xAxis:{data: pts.map(p=>p.t)},
+    series:[{data: pts.map(p=>p.v)}]
+  });
+}
+
+// ===== ADMIN DRAWER =====
+function openAdmin(opts={}){
+  $('#admin-drawer').classList.add('open');
+  $('#admin-mask').classList.add('open');
+  renderAdmin(opts);
+}
+function closeAdmin(){
+  $('#admin-drawer').classList.remove('open');
+  $('#admin-mask').classList.remove('open');
+}
+function renderAdmin(opts={}){
+  const body = $('#admin-body');
+  const groups = state.config.groups;
+
+  const fieldExistsIn = (gid) => {
+    const g = groups.find(x=>x.id===gid);
+    return g ? g.fields : [];
+  };
+
+  // ----- GROUP LIST -----
+  let html = `
+    <div class="form-row" style="display:flex;gap:8px">
+      <button class="btn" id="admin-add-group" style="flex:1">
+        <i data-lucide="folder-plus"></i> 新建分组
+      </button>
+      ${groups.length > 0 ? `
+        <button class="btn" id="admin-quick-add-field" style="flex:1;background:var(--info)">
+          <i data-lucide="plus"></i> 添加字段
+        </button>
+      ` : ''}
+    </div>
+  `;
+
+  if(groups.length === 0){
+    html += `<div class="empty-section">
+      <i data-lucide="folder-plus"></i>
+      <div class="t">还没有分组</div>
+      <div>新建分组，然后把设备字段加进去</div>
+    </div>`;
+  }
+
+  groups.forEach(g => {
+    html += `
+      <div class="form-row" style="margin-bottom:24px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:9px;background:var(--card-2);color:var(--info)">
+              <i data-lucide="${g.icon||'folder'}"></i>
+            </span>
+            <div>
+              <div style="font-weight:600;font-size:15px">${escapeHtml(g.name)}</div>
+              <div style="font-size:12px;color:var(--sub)">${g.fields.length} 个字段</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:4px">
+            <button class="icon-btn" data-edit-group="${g.id}" title="编辑分组"><i data-lucide="pencil" style="width:16px;height:16px"></i></button>
+            <button class="icon-btn" data-del-group="${g.id}" title="删除分组"><i data-lucide="trash-2" style="width:16px;height:16px"></i></button>
+          </div>
+        </div>
+        ${g.fields.length === 0 ? `
+          <div class="empty-section" style="padding:18px">
+            <i data-lucide="inbox"></i>
+            <div class="t">空分组</div>
+            <div>用顶部「添加字段」按钮加入字段</div>
+          </div>
+        ` : `
+          <div style="display:flex;flex-direction:column;gap:8px">
+            ${g.fields.map(f => `
+              <div class="list-item">
+                <span class="li-icon" style="background:${f.color}">
+                  <i data-lucide="${pickIcon(f.key)}"></i>
+                </span>
+                <div class="li-info">
+                  <div class="li-title">${escapeHtml(f.label)} <span style="color:var(--sub);font-weight:400">(${escapeHtml(f.unit||'--')})</span></div>
+                  <div class="li-sub" style="font-family:var(--mono);font-size:11px">${f.dataToken.slice(0,8)}…${f.dataToken.slice(-4)}</div>
+                </div>
+                <div class="li-actions">
+                  <button data-edit-field="${g.id}|${f.id}" title="编辑"><i data-lucide="pencil"></i></button>
+                  <button data-del-field="${g.id}|${f.id}" title="删除"><i data-lucide="trash-2"></i></button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `}
+      </div>
+    `;
+  });
+
+  body.innerHTML = html;
+  renderIcons();
+
+  // event handlers
+  $('#admin-add-group').onclick = () => promptGroupEdit();
+  const qf = $('#admin-quick-add-field');
+  if(qf) qf.onclick = () => openFieldEditorFor(null);  // 传 null 触发分组下拉
+  $$('[data-edit-group]').forEach(b => b.onclick = () => {
+    const g = groups.find(x=>x.id===b.dataset.editGroup);
+    if(g) promptGroupEdit(g);
+  });
+  $$('[data-del-group]').forEach(b => b.onclick = () => {
+    const g = groups.find(x=>x.id===b.dataset.delGroup);
+    if(g) deleteGroup(g.id);
+  });
+  // 旧的 per-group 添加字段按钮已废弃，统一通过顶部"添加字段"入口
+  $$('[data-edit-field]').forEach(b => b.onclick = () => {
+    const [gid, fid] = b.dataset.editField.split('|');
+    openFieldEditorFor(gid, fid);
+  });
+  $$('[data-del-field]').forEach(b => b.onclick = () => {
+    const [gid, fid] = b.dataset.delField.split('|');
+    deleteField(gid, fid);
+  });
+
+}
+
+async function promptGroupEdit(existing){
+  const wrap = document.createElement('div');
+  const iconOptions = GROUP_ICONS.map(i =>
+    `<span class="sw" data-icon="${i}" style="background:var(--card-2);color:var(--text)"><i data-lucide="${i}"></i></span>`
+  ).join('');
+  wrap.innerHTML = `
+    <div class="form-row">
+      <label>分组名称</label>
+      <input id="f-name" type="text" placeholder="如：客厅 StickS3" value="${escapeHtml(existing?.name||'')}">
+    </div>
+    <div class="form-row">
+      <label>图标</label>
+      <div class="color-pick" id="icon-picker">${iconOptions}</div>
+    </div>
+  `;
+  modal({
+    title: existing ? '编辑分组' : '新建分组',
+    body: wrap,
+    buttons: [
+      {label:'取消', kind:'ghost', value:false},
+      {label:'保存', kind:'', value:true}
+    ]
+  }).then(ok => {
+    if(!ok) return;
+    const name = $('#f-name').value.trim();
+    const icon = (wrap.querySelector('.sw.active')||{}).dataset?.icon || GROUP_ICONS[0];
+    if(!name){ toast('请输入分组名', 'err'); return; }
+    if(existing){
+      existing.name = name; existing.icon = icon;
+    } else {
+      state.config.groups.push({ id: uid(), name, icon, fields: [] });
+    }
+    saveAndRefresh();
+  });
+  setTimeout(() => {
+    $$('#icon-picker .sw').forEach(s => {
+      s.onclick = () => {
+        $$('#icon-picker .sw').forEach(x => x.classList.remove('active'));
+        s.classList.add('active');
+      };
+      if((s.dataset.icon) === (existing?.icon || GROUP_ICONS[0])) s.classList.add('active');
+    });
+    renderIcons();
+  }, 0);
+}
+
+async function promptFieldEdit(existing, gid){
+  // legacy wrapper - use _promptFieldEdit
+  return window._promptFieldEdit(existing, gid);
+}
+function promptFieldEdit_v2(existing, gid){
+  // v2: use inline HTML (not modal promise), simpler control flow
+  return new Promise(resolve => {
+    // 新增场景：可能 gid 为 null（用户从顶部"添加字段"进）
+    // 编辑场景：existing 必须存在 + gid 为其所属组
+    let targetGroup;
+    if(existing){
+      targetGroup = state.config.groups.find(x => x.fields.includes(existing));
+    } else if(gid){
+      targetGroup = state.config.groups.find(x => x.id === gid);
+    }
+    // 防御：编辑时找不到组、新增但没分组
+    if(existing && !targetGroup){ resolve(false); return; }
+    if(!existing && state.config.groups.length === 0){
+      toast('请先新建一个分组再添加字段', 'err');
+      resolve(false);
+      return;
+    }
+    // 新增无 gid：targetGroup 待用户从下拉选
+    const wrap = document.createElement('div');
+    const colorOptions = PALETTE.map(c =>
+      `<span class="sw" data-color="${c}" style="background:${c}"><i data-lucide="check" style="width:14px;height:14px"></i></span>`
+    ).join('');
+    wrap.innerHTML = `
+      ${(!gid && !existing) ? `
+        <div class="form-row">
+          <label>所属分组 <span class="hint">必选</span></label>
+          <select id="f-gid">
+            ${state.config.groups.map(g => `<option value="${g.id}">${escapeHtml(g.name)}</option>`).join('')}
+          </select>
+          <div class="help" style="color:var(--warn)">还没有分组？请先在管理页点「新建分组」。</div>
+        </div>
+      ` : ''}
+      <div class="form-row">
+        <label>dataToken <span class="hint">必填 · 从 my.m5stack.com 复制</span></label>
+        <input id="f-token" type="text" placeholder="32位 dataToken 或分享 URL" value="${escapeHtml(existing?.dataToken||'')}">
+        <div class="help">在 my.m5stack.com → Data → 右键数据点 → Share → 拷贝 Token 或 URL</div>
+        <button class="btn secondary sm" id="f-validate" style="margin-top:8px">
+          <i data-lucide="check-circle"></i> 校验并自动识别
+        </button>
+      </div>
+      <div class="form-row">
+        <label>原始字段名 <span class="hint">来自云端</span></label>
+        <input id="f-key" type="text" placeholder="如：temperature" value="${escapeHtml(existing?.key||'')}">
+      </div>
+      <div class="form-row">
+        <label>显示名称</label>
+        <input id="f-label" type="text" placeholder="如：温度" value="${escapeHtml(existing?.label||'')}">
+      </div>
+      <div class="form-row inline">
+        <div>
+          <label>单位</label>
+          <input id="f-unit" type="text" placeholder="°C" value="${escapeHtml(existing?.unit||'')}" style="max-width:120px">
+        </div>
+        <div>
+          <label>小数位</label>
+          <input id="f-decimals" type="number" min="0" max="6" value="${existing?.decimals ?? 1}" style="max-width:80px">
+        </div>
+        <div>
+          <label>趋势图</label>
+          <select id="f-chartable" style="max-width:110px">
+            <option value="1" ${existing?.chartable!==false?'selected':''}>显示</option>
+            <option value="0" ${existing?.chartable===false?'selected':''}>隐藏</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>颜色</label>
+        <div class="color-pick" id="color-picker">${colorOptions}</div>
+      </div>
+      <div class="form-row inline">
+        <div>
+          <label>Y轴最小</label>
+          <input id="f-min" type="number" placeholder="自动" value="${existing?.min ?? ''}" style="max-width:110px">
+        </div>
+        <div>
+          <label>Y轴最大</label>
+          <input id="f-max" type="number" placeholder="自动" value="${existing?.max ?? ''}" style="max-width:110px">
+        </div>
+      </div>
+    `;
+
+    // open drawer (not modal) so user can interact smoothly
+    $('#admin-drawer').classList.remove('open');
+    $('#admin-mask').classList.remove('open');
+
+    showFormDrawer(existing ? '编辑字段' : '添加字段', wrap, async () => {
+      // save handler
+      try{
+      const token = ($('#f-token').value || '').trim();
+      const key = ($('#f-key').value || '').trim();
+      const label = ($('#f-label').value || '').trim();
+      // 决定目标分组：编辑时保留在原组；新增时优先用下拉框值，否则用传入的 gid
+      let targetGid;
+      if(existing){
+        const oldGroup = state.config.groups.find(x => x.fields.includes(existing));
+        targetGid = oldGroup ? oldGroup.id : gid;
+      } else {
+        const sel = $('#f-gid');
+        if(sel){
+          targetGid = sel.value;          // 顶部「添加字段」进：有下拉
+        } else if(gid){
+          targetGid = gid;                // 分组内「+」进：用隐含 gid
+        } else {
+          toast('找不到目标分组', 'err');
+          return false;
+        }
+      }
+      const targetGroup = state.config.groups.find(x => x.id === targetGid);
+      if(!targetGroup){ toast('分组不存在', 'err'); return false; }
+      if(!token){ toast('dataToken 不能为空', 'err'); return false; }
+      if(!label){ toast('显示名称不能为空', 'err'); return false; }
+      const color = (wrap.querySelector('.sw.active') || {}).dataset?.color || PALETTE[0];
+      const data = {
+        id: existing?.id || uid(),
+        key: key || label,
+        label,
+        unit: ($('#f-unit').value || '').trim(),
+        color,
+        dataToken: api.extractToken(token),
+        type: 'number',
+        chartable: $('#f-chartable').value === '1',
+        decimals: parseInt($('#f-decimals').value) || 1,
+        min: $('#f-min').value === '' ? null : parseFloat($('#f-min').value),
+        max: $('#f-max').value === '' ? null : parseFloat($('#f-max').value),
+      };
+      if(existing){
+        // 编辑：可能换组
+        const oldGroup = state.config.groups.find(x => x.fields.includes(existing));
+        if(oldGroup && oldGroup.id !== targetGid){
+          oldGroup.fields = oldGroup.fields.filter(x => x.id !== existing.id);
+        }
+        Object.assign(existing, data);
+        if(!targetGroup.fields.includes(existing)) targetGroup.fields.push(existing);
+      } else {
+        targetGroup.fields.push(data);
+      }
+      saveAndRefresh();
+      // trigger first poll for this field
+      refreshFieldData(targetGroup, data);
+      toast('字段已保存', 'ok');
+      return true;
+      }catch(err){
+        console.error('save field failed', err);
+        toast('保存失败：' + (err.message || err), 'err');
+        return false;
+      }
+    }, () => {
+      // cancel handler — re-open the admin drawer
+      openAdmin({tab:'field', gid});
+    });
+
+    setTimeout(() => {
+      $$('#color-picker .sw').forEach(s => {
+        s.onclick = () => {
+          $$('#color-picker .sw').forEach(x => x.classList.remove('active'));
+          s.classList.add('active');
+        };
+        if((s.dataset.color) === (existing?.color || PALETTE[0])) s.classList.add('active');
+      });
+      renderIcons();
+      $('#f-validate').onclick = async () => {
+        const raw = ($('#f-token').value || '').trim();
+        const tk = api.extractToken(raw);
+        if(!tk){ toast('请先粘贴 dataToken', 'err'); return; }
+        const btn = $('#f-validate');
+        const oldHtml = btn.innerHTML;
+        btn.innerHTML = '<i data-lucide="loader" class="spin"></i> 校验中…';
+        renderIcons();
+        try{
+          const data = await api.shareItem(tk);
+          $('#f-token').value = tk;
+          if(data.name && !$('#f-key').value) $('#f-key').value = data.name;
+          if(data.name && !$('#f-label').value) $('#f-label').value = data.name;
+          if(data.value != null){
+            // try to infer unit
+            const sample = String(data.value);
+            toast('校验成功：' + data.name + ' = ' + sample, 'ok');
+          }
+        }catch(e){
+          toast('校验失败：' + (e.message||''), 'err');
+        }finally{
+          btn.innerHTML = oldHtml;
+          renderIcons();
+        }
+      };
+    }, 0);
+
+    resolve(true);
+  });
+}
+
+// wrapper to replace promptFieldEdit with drawer approach
+window._promptFieldEdit = promptFieldEdit_v2;
+
+function deleteGroup(gid){
+  const g = state.config.groups.find(x=>x.id===gid);
+  if(!g) return;
+  modal({
+    title:'删除分组？',
+    body:`<p>确定删除分组 <strong>"${escapeHtml(g.name)}"</strong> 及其 <strong>${g.fields.length}</strong> 个字段吗？此操作不可恢复。</p>`,
+    buttons:[
+      {label:'取消', kind:'ghost', value:false},
+      {label:'删除', kind:'danger', value:true}
+    ]
+  }).then(ok => {
+    if(!ok) return;
+    state.config.groups = state.config.groups.filter(x=>x.id!==gid);
+    // cleanup live state
+    g.fields.forEach(f => {
+      delete state.live[f.dataToken];
+      const ch = state.sparkCharts.get(f.dataToken);
+      if(ch){ try{ ch.dispose(); }catch(e){} state.sparkCharts.delete(f.dataToken); }
+    });
+    saveAndRefresh();
+    toast('已删除', 'ok');
+  });
+}
+
+function deleteField(gid, fid){
+  const g = state.config.groups.find(x=>x.id===gid);
+  if(!g) return;
+  const idx = g.fields.findIndex(x=>x.id===fid);
+  if(idx < 0) return;
+  const f = g.fields[idx];
+  modal({
+    title:'删除字段？',
+    body:`<p>确定删除字段 <strong>"${escapeHtml(f.label)}"</strong> 吗？</p>`,
+    buttons:[
+      {label:'取消', kind:'ghost', value:false},
+      {label:'删除', kind:'danger', value:true}
+    ]
+  }).then(ok => {
+    if(!ok) return;
+    g.fields.splice(idx, 1);
+    delete state.live[f.dataToken];
+    const ch = state.sparkCharts.get(f.dataToken);
+    if(ch){ try{ ch.dispose(); }catch(e){} state.sparkCharts.delete(f.dataToken); }
+    saveAndRefresh();
+    toast('已删除', 'ok');
+  });
+}
+
+// ===== FORM DRAWER (re-uses admin drawer styling) =====
+function showFormDrawer(title, bodyEl, onSave, onCancel){
+  const head = $('#admin-drawer .drawer-head h3');
+  head.textContent = title;
+  $('#admin-body').innerHTML = '';
+  $('#admin-body').appendChild(bodyEl);
+  // override foot
+  const foot = $('#admin-drawer .drawer-foot');
+  foot.innerHTML = `
+    <button class="btn ghost" id="form-cancel"><i data-lucide="arrow-left"></i> 返回</button>
+    <div style="flex:1"></div>
+    <button class="btn" id="form-save"><i data-lucide="check"></i> 保存</button>
+  `;
+  renderIcons();
+  $('#admin-drawer').classList.add('open');
+  $('#admin-mask').classList.add('open');
+  $('#form-cancel').onclick = () => {
+    $('#admin-drawer').classList.remove('open');
+    $('#admin-mask').classList.remove('open');
+    if(onCancel) onCancel();
+  };
+  $('#form-save').onclick = async () => {
+    const ok = await onSave();
+    if(ok){
+      $('#admin-drawer').classList.remove('open');
+      $('#admin-mask').classList.remove('open');
+    }
+  };
+}
+
+async function refreshFieldData(g, f){
+  try{
+    const records = await api.dataHistory(f.dataToken);
+    const live = mergeHistoryIntoLive(f.dataToken, records);
+    live.lastSuccessAt = Date.now();
+    const chart = state.sparkCharts.get(f.dataToken);
+    if(chart){
+      chart.setOption({ xAxis:{data: live.history.map(p=>p.t)}, series:[{data: live.history.map(p=>p.v)}] });
+    }
+    updateFieldCards();
+    updateStatusBar();
+  }catch(e){
+    toast('字段加载失败：'+e.message, 'err');
+  }
+}
+
+function saveAndRefresh(){
+  storage.save(state.config);
+  render();
+  if(state.config.groups.length > 0 && countTotalFields() > 0){
+    startPolling();
+  } else {
+    stopPolling();
+  }
+  // re-render admin if open
+  if($('#admin-drawer').classList.contains('open')){
+    // only re-render admin body if not in form mode
+    const head = $('#admin-drawer .drawer-head h3');
+    if(head.textContent === '数据源管理'){
+      renderAdmin();
+    }
+  }
+}
+
+// ===== DETAIL DRAWER =====
+function findFieldById(fid){
+  for(const g of state.config.groups){
+    const f = g.fields.find(x=>x.id===fid);
+    if(f) return f;
+  }
+  return null;
+}
+function findGroupOfField(fid){
+  for(const g of state.config.groups){
+    if(g.fields.find(x=>x.id===fid)) return g;
+  }
+  return null;
+}
+async function openDetail(fid){
+  const f = findFieldById(fid);
+  if(!f || !f.chartable){ toast('该字段未开启趋势图', 'err'); return; }
+  const g = findGroupOfField(fid);
+  state.activeDetailFieldId = fid;
+  state.detailRange = '1h';
+  $('#detail-drawer').classList.add('open');
+  $('#detail-mask').classList.add('open');
+  $('#detail-title').textContent = `${g?.name||''} · ${f.label}`;
+  await refreshDetailChart();
+}
+function closeDetail(){
+  $('#detail-drawer').classList.remove('open');
+  $('#detail-mask').classList.remove('open');
+  state.activeDetailFieldId = null;
+  if(state.detailChart){
+    try{ state.detailChart.dispose(); }catch(e){}
+    state.detailChart = null;
+  }
+}
+async function refreshDetailChart(){
+  const f = findFieldById(state.activeDetailFieldId);
+  if(!f) return;
+  const live = state.live[f.dataToken];
+  $('#detail-body').innerHTML = `
+    <div class="detail-head">
+      <div class="dh-row">
+        <div class="d-label">
+          <span class="d-ico" style="background:${f.color}"><i data-lucide="${pickIcon(f.key)}"></i></span>
+          <span>${escapeHtml(f.label)}</span>
+          <span style="color:var(--sub)">· ${escapeHtml(f.unit||'')}</span>
+        </div>
+        <span id="d-online-badge"></span>
+      </div>
+      <div class="d-value">
+        <span class="num">${live ? fmtVal(live.value, f.decimals ?? 1) : '--'}</span>
+        <span class="unit">${escapeHtml(f.unit||'')}</span>
+      </div>
+      <div class="d-meta">
+        <span>更新于 ${live?fmtTime(live.updateTime):'--'} ${live?`(${fmtRelative(live.updateTime)})`:''}</span>
+        <span>状态 ${live ? (isFieldOffline(f, live)?'<span style="color:var(--err)">离线 '+fmtDuration(Math.floor((Date.now()-live.lastSuccessAt)/1000))+'</span>':'<span style="color:var(--ok)">在线</span>') : '<span style="color:var(--sub)">等待数据…</span>'}</span>
+        <span>dataToken: <code style="font-family:var(--mono);font-size:11px">${f.dataToken.slice(0,8)}…${f.dataToken.slice(-4)}</code></span>
+      </div>
+    </div>
+    <div class="range-tabs" id="range-tabs">
+      ${['1h','6h','24h','7d','all'].map(r => `<button data-range="${r}" class="${state.detailRange===r?'active':''}">${r==='all'?'全部':r}</button>`).join('')}
+      <div style="flex:1"></div>
+      <span style="font-size:12px;color:var(--sub);align-self:center;margin-right:6px">上限 500 点</span>
+    </div>
+    <div class="chart-wrap"><div id="big-chart"></div></div>
+    <div class="stats-grid" id="stats-grid"></div>
+  `;
+  renderIcons();
+
+  // range tabs handlers
+  $$('#range-tabs button').forEach(b => b.onclick = () => {
+    state.detailRange = b.dataset.range;
+    $$('#range-tabs button').forEach(x => x.classList.toggle('active', x===b));
+    refreshDetailChart();
+  });
+
+  // fetch history (use range)
+  const wrap = $('#big-chart');
+  if(state.detailChart){ try{ state.detailChart.dispose(); }catch(e){} }
+  const chart = echarts.init(wrap, null, {renderer:'canvas'});
+  state.detailChart = chart;
+  chart.showLoading({ text:'加载中…', color: f.color, textColor:'#8E8E93', maskColor:'rgba(255,255,255,0)' });
+
+  let history = [];
+  try{
+    const raw = await api.dataHistory(f.dataToken);
+    history = raw.map(h => ({
+      t: parseServerTime(h.updateTime || h.createTime),
+      v: parseFloat(h.value)
+    })).filter(p => !isNaN(p.v)).sort((a,b) => a.t - b.t);
+  }catch(e){
+    chart.hideLoading();
+    toast('趋势加载失败：' + (e.message || '未知错误'), 'err');
+    chart.setOption({
+      title:{text:'趋势加载失败', subtext: e.message || '', left:'center', top:'middle',
+             textStyle:{color:'#FF3B30', fontSize:14, fontWeight:500},
+             subtextStyle:{color:'#8E8E93', fontSize:11}},
+      xAxis:{type:'time'}, yAxis:{}, series:[]
+    });
+    const sg = $('#stats-grid');
+    if(sg) sg.innerHTML = `<div class="stat" style="grid-column:span 4"><div class="lbl">趋势加载失败</div><div class="val" style="color:var(--err);font-size:13px">${escapeHtml(e.message || '请检查 dataToken 是否有效')}</div></div>`;
+    return;
+  }
+
+  // filter by range
+  const now = Date.now();
+  let rangeMs;
+  switch(state.detailRange){
+    case '1h': rangeMs = 3600*1000; break;
+    case '6h': rangeMs = 6*3600*1000; break;
+    case '24h': rangeMs = 24*3600*1000; break;
+    case '7d': rangeMs = 7*24*3600*1000; break;
+    default: rangeMs = Infinity;
+  }
+  let pts = rangeMs === Infinity ? history : history.filter(p => p.t >= now - rangeMs);
+
+  // downsample to <=500 points if needed
+  if(pts.length > 500){
+    const step = Math.ceil(pts.length / 500);
+    pts = pts.filter((_, i) => i % step === 0);
+    if(pts[pts.length-1] !== history[history.length-1]) pts.push(history[history.length-1]); // always include last
+  }
+
+  chart.hideLoading();
+  if(pts.length < 2){
+    chart.setOption({
+      title:{text:'暂无历史数据', left:'center', top:'center', textStyle:{color:'#8E8E93', fontSize:14, fontWeight:400}},
+      xAxis:{type:'time'}, yAxis:{}, series:[]
+    });
+  } else {
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches && state.config.theme !== 'light';
+    const textCol = isDark ? '#EBEBF5' : '#1C1C1E';
+    const gridLine = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+    const subCol = '#8E8E93';
+    chart.setOption({
+      animation: true,
+      animationDuration: 400,
+      grid: { left: 50, right: 24, top: 24, bottom: 56 },
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: isDark ? '#2C2C2E' : '#1C1C1E',
+        borderWidth:0,
+        textStyle:{color:'#fff', fontSize:13},
+        padding: [10, 14],
+        formatter: (params) => {
+          const p = params[0];
+          const d = new Date(p.value[0]);
+          const date = d.toLocaleDateString('zh-CN');
+          const time = d.toLocaleTimeString('zh-CN', {hour12:false});
+          return `<div style="font-size:11px;opacity:.6;margin-bottom:4px">${escapeHtml(date)} ${escapeHtml(time)}</div>` +
+                 `<div style="font-size:18px;font-weight:600">${p.value[1].toFixed(f.decimals ?? 1)} <span style="font-size:12px;opacity:.7">${escapeHtml(f.unit||'')}</span></div>`;
+        }
+      },
+      xAxis: {
+        type:'time',
+        axisLine:{show:false},
+        axisTick:{show:false},
+        axisLabel:{color:subCol, fontSize:11, hideOverlap:true},
+        splitLine:{show:false}
+      },
+      yAxis: {
+        type:'value',
+        scale:true,
+        min: f.min != null ? f.min : 'dataMin',
+        max: f.max != null ? f.max : 'dataMax',
+        axisLine:{show:false},
+        axisTick:{show:false},
+        axisLabel:{color:subCol, fontSize:11, formatter:(v)=>{
+          if(Math.abs(v) >= 1000) return (v/1000).toFixed(1)+'k';
+          return Number.isInteger(v) ? v : v.toFixed(1);
+        }},
+        splitLine:{lineStyle:{color:gridLine}}
+      },
+      series: buildTrendSeries(pts, f)
+    });
+  }
+
+  // stats grid
+  renderStatsGrid(pts, live, f);
+}
+
+// 把时间序列拆分：相邻点 gap > THRESHOLD → 该段虚线（疑似离线）
+function buildTrendSeries(pts, f){
+  const GAP_THRESHOLD_MS = 3 * 60 * 1000; // >3min 视为离线段
+  if(pts.length < 2) return [];
+
+  const segments = [];     // {type:'solid'|'dashed', points:[[t,v],...]}
+  let cur = { type:'solid', points: [[pts[0].t, pts[0].v]] };
+
+  for(let i=1; i<pts.length; i++){
+    const gap = pts[i].t - pts[i-1].t;
+    cur.points.push([pts[i].t, pts[i].v]);
+    if(gap > GAP_THRESHOLD_MS && i < pts.length - 1){
+      // 当前段到此结束
+      segments.push(cur);
+      // 用虚线桥接 i-1 → i（标记离线期）
+      segments.push({
+        type:'dashed',
+        points: [[pts[i-1].t, pts[i-1].v], [pts[i].t, pts[i].v]]
+      });
+      // 开启新的实线段
+      cur = { type:'solid', points: [[pts[i].t, pts[i].v]] };
+    }
+  }
+  segments.push(cur);
+
+  // 全部 solid 段时合并（避免 ECharts 多 series 性能浪费）
+  if(segments.every(s => s.type === 'solid')){
+    return [makeSolidSeries(pts, f, /*withMarkPoint=*/true)];
+  }
+
+  // 多段：solid + dashed 交替；dashed 不带 area / markPoint
+  const allSeries = [];
+  segments.forEach((seg, idx) => {
+    if(seg.type === 'solid'){
+      // 只有"最长"的实线段挂 markPoint（避免重复极值标记）
+      const len = seg.points.length;
+      const isLongest = segments.filter(s=>s.type==='solid').reduce((m,s)=>Math.max(m,s.points.length),0) === len;
+      allSeries.push(makeSolidSeries(seg.points, f, isLongest));
+    } else {
+      allSeries.push({
+        type:'line',
+        smooth: false,
+        showSymbol: false,
+        silent: true,
+        lineStyle:{
+          color: hexA(f.color, 0.35),
+          width: 1.2,
+          type: 'dashed',
+          dashOffset: 4
+        },
+        data: seg.points,
+        z: 2,
+        tooltip: { show: false }
+      });
+    }
+  });
+  return allSeries;
+}
+
+function makeSolidSeries(data, f, withMarkPoint){
+  const base = {
+    type:'line',
+    smooth: true,
+    showSymbol: false,
+    sampling: 'lttb',
+    lineStyle:{color:f.color, width:2.5},
+    itemStyle:{color:f.color},
+    areaStyle:{
+      color:{
+        type:'linear', x:0, y:0, x2:0, y2:1,
+        colorStops:[
+          {offset:0, color: hexA(f.color, 0.32)},
+          {offset:1, color: hexA(f.color, 0)}
+        ]
+      }
+    },
+    data: data
+  };
+  if(withMarkPoint){
+    base.markPoint = {
+      symbol:'circle', symbolSize: 28,
+      itemStyle:{color:f.color, borderColor:'#fff', borderWidth:2},
+      label:{show:false},
+      data:[
+        {type:'max', name:'最大值'},
+        {type:'min', name:'最小值'}
+      ]
+    };
+  }
+  return base;
+}
+function renderStatsGrid(pts, live, f){
+  const grid = $('#stats-grid');
+  if(!grid) return;
+  if(pts.length === 0 && !live){
+    grid.innerHTML = `<div class="stat" style="grid-column:span 4"><div class="lbl">等待数据…</div></div>`;
+    return;
+  }
+  const vals = pts.map(p=>p.v).filter(v=>!isNaN(v));
+  const arr = vals.slice();
+  let max='--', min='--', avg='--', last='--';
+  if(arr.length){
+    max = Math.max(...arr).toFixed(f.decimals ?? 1);
+    min = Math.min(...arr).toFixed(f.decimals ?? 1);
+    avg = (arr.reduce((s,v)=>s+v,0)/arr.length).toFixed(f.decimals ?? 1);
+    if(live && !isNaN(live.value)) last = Number(live.value).toFixed(f.decimals ?? 1);
+  }
+  grid.innerHTML = `
+    <div class="stat"><div class="lbl">最新</div><div class="val">${escapeHtml(last)} <span style="font-size:11px;color:var(--sub)">${escapeHtml(f.unit||'')}</span></div></div>
+    <div class="stat"><div class="lbl">区间最大</div><div class="val" style="color:var(--err)">${escapeHtml(max)}</div></div>
+    <div class="stat"><div class="lbl">区间最小</div><div class="val" style="color:var(--info)">${escapeHtml(min)}</div></div>
+    <div class="stat"><div class="lbl">区间平均</div><div class="val">${escapeHtml(avg)}</div></div>
+  `;
+}
+function hexA(hex, alpha){
+  // hex like #FF9F0A → rgba
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if(!m) return hex;
+  const r = parseInt(m[1],16), g = parseInt(m[2],16), b = parseInt(m[3],16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+// ===== HELP / ABOUT =====
+function showHelp(){
+  modal({
+    title:'使用说明',
+    body:`
+      <h4>查看数据（访客）</h4>
+      <p style="margin-top:6px">直接打开网站即可看到管理员配置的字段实时数据。每 ${DEFAULT_CONFIG.pollIntervalSec} 秒自动刷新一次，点击卡片可看历史趋势。</p>
+      <h4>如何获取 dataToken</h4>
+      <ol style="margin-top:6px">
+        <li>登录 <code>my.m5stack.com</code></li>
+        <li>侧边栏点击 <b>Data</b> 进入 EzData2 面板</li>
+        <li>点击你的设备 → 找到要监测的数据点</li>
+        <li><b>右键</b> 该数据点 → <b>Share</b> → 拷贝 <b>Token</b></li>
+      </ol>
+      <h4>进入管理员后台</h4>
+      <p style="margin-top:6px">在网址后追加 <code>?admin=1</code>（例：<code>https://&lt;user&gt;.github.io/ezdata-dashboard/?admin=1</code>），输入管理员口令后即可增删字段、修改阈值。管理员会话仅本次有效，关闭页面自动失效。</p>
+      <h4>设备在线/离线判定</h4>
+      <p style="margin-top:6px">判定完全基于每个字段自己的上报数据，<strong>无需设备 Token</strong>：任一字段在自身阈值内有新上报 → 设备在线。</p>
+      <h4>离线判定</h4>
+      <p style="margin-top:6px">离线判定基于 EzData2 记录的<strong>真实上报时间</strong>（<code>dataHistory</code> 接口的 <code>updateTime</code>，即 STICK S3 上报时刻）。阈值按设备上报周期<strong>自动适应</strong>：<br>· 距最新上报 &gt; 周期 + 60s（漏 1 期）→ <em>数据停止</em><br>· 距最新上报 &gt; 2×周期 + 120s（漏 2 期）→ <em>离线</em><br>当前设备 5 分钟上报：约 6 分钟无更新 = 数据停止，约 12 分钟无更新 = 离线。判定不随网页刷新复位，卡片时间 = 设备真实上报时间。</p>
+      <h4>轮询频率</h4>
+      <p style="margin-top:6px">默认每 ${getPollIntervalSec()} 秒拉一次最新值。点击顶部刷新间隔按钮（如「60s」）可在下拉框中修改（预设 30/60/120/300 秒或自定义 10~3600 秒），修改仅本次会话有效，重新打开网页恢复默认 ${DEFAULT_CONFIG.pollIntervalSec} 秒。</p>
+    `,
+    buttons:[{label:'我知道了', kind:'', value:null}]
+  });
+}
+
+// ===== WIRE UP =====
+function wireUp(){
+  // top bar
+  $('#refresh-btn').onclick = async () => {
+    const btn = $('#refresh-btn');
+    // 用父元素的 class，不依赖子 SVG 引用（lucide 可能替换）
+    btn.classList.add('spinning');
+    try{
+      if(countTotalFields() === 0){
+        toast('当前没有字段可刷新', 'ok');
+      } else {
+        await pollOnce();
+        updateFieldCards();
+        updateStatusBar();
+        updateAlertBar();
+        toast('已刷新', 'ok');
+      }
+    }catch(e){
+      toast('刷新失败：' + e.message, 'err');
+    }finally{
+      // 至少 400ms 显示旋转状态，避免请求太快看起来没反应
+      setTimeout(() => btn.classList.remove('spinning'), 400);
+    }
+  };
+  $('#quick-add-btn')?.remove;  // 已废弃（与 admin 重复）
+  $('#theme-btn').onclick = nextTheme;
+  $('#status-iv').onclick = (e) => { e.stopPropagation(); toggleIvMenu(); };
+  // 管理员入口：访客看不到齿轮；解锁后才会显示（maybeShowAdminBtn）
+  // 通过 URL ?admin=1 进入时也会自动触发口令弹窗
+  $('#admin-btn').onclick = () => openAdmin();
+
+  // empty state
+  $('#empty-add').onclick = () => {
+    if(state.config.groups.length === 0){ tryAdminOpen(); }
+    else { tryAdminOpen(); }
+  };
+  $('#empty-help').onclick = () => showHelp();
+
+  // alert close
+  $('#alert-close').onclick = () => $('#alert-bar').classList.remove('show');
+
+  // admin close
+  $('#admin-close').onclick = closeAdmin;
+  $('#admin-mask').onclick = closeAdmin;
+
+  // admin foot (import/export/reset 已移除)
+
+  // detail close
+  $('#detail-close').onclick = closeDetail;
+  $('#detail-mask').onclick = closeDetail;
+  $('#detail-refresh').onclick = () => refreshDetailChart();
+
+  // modal close
+  $('#modal-close').onclick = () => $('#modal-mask').classList.remove('open');
+  $('#modal-mask').onclick = (e) => {
+    if(e.target.id === 'modal-mask') $('#modal-mask').classList.remove('open');
+  };
+
+  // resize ECharts
+  window.addEventListener('resize', () => {
+    state.sparkCharts.forEach(c => c.resize());
+    if(state.detailChart) state.detailChart.resize();
+  });
+}
+
+// ===== FIRST RUN =====
+function maybeFirstRun(){
+  if(state.config.groups.length === 0){
+    setTimeout(() => {
+      modal({
+        title:'欢迎使用 物联网数据监测平台',
+        body:`
+          <p>这是一个基于 M5Stack EzData2 的实时数据可视化面板，支持多设备、多字段，自带趋势图和离线检测。</p>
+          <div class="first-run-step">
+            <div class="step-num">1</div>
+            <div class="step-body"><b>查看数据</b>字段已默认配置，温度字段立即可读，刷新间隔默认 60 秒。</div>
+          </div>
+          <div class="first-run-step">
+            <div class="step-num">2</div>
+            <div class="step-body"><b>管理员入口</b>在网址后加 <code>?admin=1</code>（例：<code>?admin=1</code>），输入管理员口令后可增删字段、修改阈值。</div>
+          </div>
+          <div class="first-run-step">
+            <div class="step-num">3</div>
+            <div class="step-body"><b>实时监测</b>每 ${DEFAULT_CONFIG.pollIntervalSec} 秒自动刷新，点击卡片查看趋势</div>
+          </div>
+        `,
+        buttons:[
+          {label:'查看完整教程', kind:'secondary', value:'help'},
+          {label:'进入管理后台', kind:'', value:'admin'}
+        ]
+      }).then(v => {
+        if(v === 'help') showHelp();
+        if(v === 'admin') tryAdminOpen();
+      });
+    }, 600);
+  }
+}
+
+// ===== BOOT =====
+function boot(){
+  state.config = storage.load();
+  applyTheme(state.config.theme || 'auto');
+  wireUp();
+  maybeShowAdminBtn();
+  render();
+  if(countTotalFields() > 0) startPolling();
+  startOffTick();
+  renderIcons();
+
+  // URL 路由：?admin=1 或 #admin 自动触发管理员鉴权
+  const params = new URLSearchParams(location.search);
+  if(params.get('admin') === '1' || location.hash === '#admin'){
+    setTimeout(() => tryAdminOpen(), 400);
+  } else {
+    maybeFirstRun();
+  }
+}
+
+// wait for lucide (CDN can be slow; keep retrying icon render up to 5s)
+function whenLucideReady(){
+  if(window.lucide && window.lucide.createIcons){
+    renderIcons();
+    return true;
+  }
+  return false;
+}
+const _lucideRetry = setInterval(() => {
+  if(whenLucideReady()){
+    clearInterval(_lucideRetry);
+  }
+}, 120);
+setTimeout(() => clearInterval(_lucideRetry), 5000);
+
+// wait for lucide
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', () => {
+    whenLucideReady() ? boot() : setTimeout(boot, 50);
+  });
+} else {
+  whenLucideReady() ? boot() : setTimeout(boot, 50);
+}
+
+// ===== "添加字段" 入口：支持带 gid（从某个组的按钮进）或 null（从顶部按钮进 → 弹下拉选分组）=====
+function openFieldEditorFor(gid, fid){
+  if(fid){
+    const g = state.config.groups.find(x=>x.id===gid);
+    const f = g && g.fields.find(x=>x.id===fid);
+    if(f){ f._gid = gid; window._promptFieldEdit(f, gid); return; }
+  }
+  // 新增：传入 null 触发下拉；不传第二个参数或 undefined 也走新增
+  window._promptFieldEdit(null, gid || null);
+}
+
+})();
+</script>
+</body>
+</html>
