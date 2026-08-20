@@ -860,7 +860,8 @@ const DEFAULT_CONFIG = {
           dataToken: '20923cad1b9c4bbbb50803655665fedd',
           icon: 'thermometer',
           color: '#FF9F0A',
-          min: -10, max: 60, warn: [15, 35]
+          min: -10, max: 60, warn: [15, 35],
+          chartable: true
         },
         {
           id: 'f-humidity',
@@ -869,7 +870,8 @@ const DEFAULT_CONFIG = {
           dataToken: '6ff96a0bd96f43ee8380bf3e7e0e5237',
           icon: 'droplets',
           color: '#0A84FF',
-          min: 0, max: 100, warn: [30, 80]
+          min: 0, max: 100, warn: [30, 80],
+          chartable: true
         }
       ]
     }
@@ -1062,7 +1064,13 @@ async function promptAdminLogin(){
   });
 }
 function tryAdminOpen(){
-  promptAdminLogin().then(ok => { if(ok) openAdmin(); });
+  promptAdminLogin().then(ok => {
+    if(ok){
+      maybeShowAdminBtn();
+      render();  // 重新渲染卡片以显示 .g-actions
+      openAdmin();
+    }
+  });
 }
 function maybeShowAdminBtn(){
   // 仅当管理员已解锁（会话内）时显示齿轮；访客看不到
@@ -1551,11 +1559,13 @@ function renderGroups(){
             ${deviceBadge}
           </div>
         </div>
+        ${state.isAdmin ? `
         <div class="g-actions">
           <button class="icon-btn" data-act="add-field" data-gid="${g.id}" title="添加字段"><i data-lucide="plus"></i></button>
           <button class="icon-btn" data-act="edit-group" data-gid="${g.id}" title="编辑"><i data-lucide="pencil"></i></button>
           <button class="icon-btn" data-act="del-group" data-gid="${g.id}" title="删除"><i data-lucide="trash-2"></i></button>
         </div>
+        ` : ''}
       </header>
       <div class="fields-grid">
         ${g.fields.map(f => renderFieldCard(f, g)).join('')}
@@ -2243,7 +2253,7 @@ function findGroupOfField(fid){
 }
 async function openDetail(fid){
   const f = findFieldById(fid);
-  if(!f || !f.chartable){ toast('该字段未开启趋势图', 'err'); return; }
+  if(!f || f.chartable === false){ toast('该字段未开启趋势图', 'err'); return; }
   const g = findGroupOfField(fid);
   state.activeDetailFieldId = fid;
   state.detailRange = '1h';
