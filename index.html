@@ -2354,6 +2354,13 @@ async function refreshDetailChart(){
   }
   let pts = rangeMs === Infinity ? history : history.filter(p => p.t >= now - rangeMs);
 
+  // 清洗脏数据：超出字段合理范围 [min, max] 的值视为异常（传感器启动瞬间的随机读数、串字段的值）
+  if(typeof f.min === 'number' || typeof f.max === 'number'){
+    const lo = typeof f.min === 'number' ? f.min : -Infinity;
+    const hi = typeof f.max === 'number' ? f.max : Infinity;
+    pts = pts.filter(p => p.v >= lo && p.v <= hi);
+  }
+
   // downsample to <=500 points if needed
   if(pts.length > 500){
     const step = Math.ceil(pts.length / 500);
@@ -2498,15 +2505,8 @@ function makeSolidSeries(data, f, withMarkPoint){
     data: data
   };
   if(withMarkPoint){
-    base.markPoint = {
-      symbol:'circle', symbolSize: 28,
-      itemStyle:{color:f.color, borderColor:'#fff', borderWidth:2},
-      label:{show:false},
-      data:[
-        {type:'max', name:'最大值'},
-        {type:'min', name:'最小值'}
-      ]
-    };
+    // 注：原本用 markPoint 在曲线最大值/最小值处画大圆点。普通用户不易理解且压扁 Y 轴，
+    // 极值信息已由底部 stats-grid 全面展示，曲线保持干净。withMarkPoint 参数保留以便后续扩展。
   }
   return base;
 }
@@ -2517,18 +2517,23 @@ function renderStatsGrid(pts, live, f){
     grid.innerHTML = `<div class="stat" style="grid-column:span 4"><div class="lbl">等待数据…</div></div>`;
     return;
   }
-  const vals = pts.map(p=>p.v).filter(v=>!isNaN(v));
+  const vals = pts.map(p=>p.v).filter(v=>!isNaN(v) && isFinite(v));
   const arr = vals.slice();
   let max='--', min='--', avg='--', last='--';
   if(arr.length){
     max = Math.max(...arr).toFixed(f.decimals ?? 1);
     min = Math.min(...arr).toFixed(f.decimals ?? 1);
     avg = (arr.reduce((s,v)=>s+v,0)/arr.length).toFixed(f.decimals ?? 1);
-    if(live && !isNaN(live.value)) last = Number(live.value).toFixed(f.decimals ?? 1);
   }
+  if(live && !isNaN(live.value) && isFinite(live.value)) last = Number(live.value).toFixed(f.decimals ?? 1);
+  // 上限/下限用于在统计区右侧标注"超出范围 N 个被过滤"提示
+  const lo = typeof f.min === 'number' ? f.min : null;
+  const hi = typeof f.max === 'number' ? f.max : null;
+  const filtered = (lo!==null||hi!==null) ? pts.filter(p => p.v < (lo??-Infinity) || p.v > (hi??Infinity)).length : 0;
+  const filterNote = filtered > 0 ? `<span style="font-size:10px;color:var(--sub);margin-left:4px">（已过滤 ${filtered} 个异常值）</span>` : '';
   grid.innerHTML = `
     <div class="stat"><div class="lbl">最新</div><div class="val">${escapeHtml(last)} <span style="font-size:11px;color:var(--sub)">${escapeHtml(f.unit||'')}</span></div></div>
-    <div class="stat"><div class="lbl">区间最大</div><div class="val" style="color:var(--err)">${escapeHtml(max)}</div></div>
+    <div class="stat"><div class="lbl">区间最大</div><div class="val" style="color:var(--err)">${escapeHtml(max)} ${filterNote}</div></div>
     <div class="stat"><div class="lbl">区间最小</div><div class="val" style="color:var(--info)">${escapeHtml(min)}</div></div>
     <div class="stat"><div class="lbl">区间平均</div><div class="val">${escapeHtml(avg)}</div></div>
   `;
