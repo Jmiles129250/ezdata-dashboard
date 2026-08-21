@@ -523,7 +523,7 @@ main{
 .empty-section .t{font-weight:600;color:var(--text);margin-bottom:4px}
 
 /* ===== detail drawer chart ===== */
-.detail-body{padding:0;display:flex;flex-direction:column}
+.detail-body{padding:0;display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .detail-head{
   padding:22px 24px 18px;
   display:flex;flex-direction:column;gap:6px;
@@ -671,8 +671,9 @@ main{
   .detail-head .d-value{font-size:36px}
   .range-tabs{padding:10px 14px 0}
   .range-tabs button{padding:7px 11px;font-size:12px}
-  .chart-wrap{padding:8px 8px 12px}
-  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .chart-wrap{padding:8px 8px 12px;min-height:260px}
+  .chart-wrap>div{min-height:260px}
+  .stats-grid{grid-template-columns:repeat(2,1fr);flex-shrink:0}
   .stats-grid .stat{padding:10px 12px}
   .stats-grid .stat .val{font-size:15px}
 }
