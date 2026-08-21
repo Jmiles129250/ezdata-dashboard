@@ -2383,7 +2383,7 @@ async function refreshDetailChart(){
     chart.setOption({
       animation: true,
       animationDuration: 400,
-      grid: { left: 50, right: 24, top: 24, bottom: 56 },
+      grid: { left: 50, right: 24, top: 24, bottom: 64 },
       tooltip: {
         trigger: 'axis',
         backgroundColor: isDark ? '#2C2C2E' : '#1C1C1E',
@@ -2403,7 +2403,21 @@ async function refreshDetailChart(){
         type:'time',
         axisLine:{show:false},
         axisTick:{show:false},
-        axisLabel:{color:subCol, fontSize:11, hideOverlap:true},
+        axisLabel:{
+          color:subCol,
+          fontSize:11,
+          hideOverlap:true,
+          interval:'auto',
+          padding:[8, 0, 0, 0],
+          formatter: (val) => {
+            const d = new Date(val);
+            const today = new Date(); today.setHours(0,0,0,0);
+            const d0 = new Date(d); d0.setHours(0,0,0,0);
+            const sameDay = d0.getTime() === today.getTime();
+            const hm = d.toLocaleTimeString('zh-CN', {hour12:false, hour:'2-digit', minute:'2-digit'});
+            return sameDay ? hm : hm;
+          }
+        },
         splitLine:{show:false}
       },
       yAxis: {
@@ -2421,6 +2435,10 @@ async function refreshDetailChart(){
       },
       series: buildTrendSeries(pts, f)
     });
+    // 抽屉滑入动画通常 300ms，setOption 后立刻 resize 会拿到错误尺寸；
+    // 延时到下一帧 + 动画结束后再 resize 一次，保证 X 轴不会因容器过窄挤入绘图区
+    requestAnimationFrame(() => chart.resize());
+    setTimeout(() => chart.resize(), 350);
   }
 
   // stats grid
