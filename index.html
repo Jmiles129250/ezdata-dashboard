@@ -2453,17 +2453,14 @@ function buildTrendSeries(pts, f){
 
   // 全部 solid 段时合并（避免 ECharts 多 series 性能浪费）
   if(segments.every(s => s.type === 'solid')){
-    return [makeSolidSeries(pts, f, /*withMarkPoint=*/true)];
+    return appendExtremeMark([makeSolidSeries(pts, f)], pts, f);
   }
 
   // 多段：solid + dashed 交替；dashed 不带 area / markPoint
   const allSeries = [];
-  segments.forEach((seg, idx) => {
+  segments.forEach((seg) => {
     if(seg.type === 'solid'){
-      // 只有"最长"的实线段挂 markPoint（避免重复极值标记）
-      const len = seg.points.length;
-      const isLongest = segments.filter(s=>s.type==='solid').reduce((m,s)=>Math.max(m,s.points.length),0) === len;
-      allSeries.push(makeSolidSeries(seg.points, f, isLongest));
+      allSeries.push(makeSolidSeries(seg.points, f));
     } else {
       allSeries.push({
         type:'line',
@@ -2482,11 +2479,39 @@ function buildTrendSeries(pts, f){
       });
     }
   });
-  return allSeries;
+  return appendExtremeMark(allSeries, pts, f);
 }
 
-function makeSolidSeries(data, f, withMarkPoint){
-  const base = {
+// 基于清洗后的全局极值，追加一个只画 max/min 标注的独立 series
+// 圆点直径约 9px（线宽 2.5 的约 3.6 倍，明显大于线条但不夸张），并附带数值标签
+function appendExtremeMark(series, pts, f){
+  if(pts.length < 2) return series;
+  let maxP = pts[0], minP = pts[0];
+  for(const p of pts){
+    if(p.v > maxP.v) maxP = p;
+    if(p.v < minP.v) minP = p;
+  }
+  if(maxP === minP) return series; // 恒定值无需标注
+  series.push({
+    type:'line', data:[], silent:true, tooltip:{show:false},
+    markPoint:{
+      symbol:'circle', symbolSize: 9,
+      itemStyle:{color:f.color, borderColor:'#fff', borderWidth:2},
+      label:{
+        show:true, position:'top', fontSize:10, color:f.color, fontWeight:600,
+        formatter:(o)=> Number(o.value).toFixed(f.decimals ?? 1)
+      },
+      data:[
+        {coord:[maxP.t, maxP.v], value:maxP.v},
+        {coord:[minP.t, minP.v], value:minP.v}
+      ]
+    }
+  });
+  return series;
+}
+
+function makeSolidSeries(data, f){
+  return {
     type:'line',
     smooth: true,
     showSymbol: false,
@@ -2504,11 +2529,6 @@ function makeSolidSeries(data, f, withMarkPoint){
     },
     data: data
   };
-  if(withMarkPoint){
-    // 注：原本用 markPoint 在曲线最大值/最小值处画大圆点。普通用户不易理解且压扁 Y 轴，
-    // 极值信息已由底部 stats-grid 全面展示，曲线保持干净。withMarkPoint 参数保留以便后续扩展。
-  }
-  return base;
 }
 function renderStatsGrid(pts, live, f){
   const grid = $('#stats-grid');
