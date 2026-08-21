@@ -1170,13 +1170,19 @@ function closeIvMenu(){
   if(m) m.remove();
   document.removeEventListener('pointerdown', onIvMenuOutside, true);
   window.removeEventListener('scroll', closeIvMenu, true);
-  window.removeEventListener('resize', closeIvMenu);
+  window.removeEventListener('resize', onIvMenuResize);
   window.removeEventListener('keydown', onIvMenuKey, true);
 }
 function onIvMenuOutside(e){
   if(!e.target.closest('#iv-menu') && !e.target.closest('#status-iv')) closeIvMenu();
 }
 function onIvMenuKey(e){ if(e.key === 'Escape') closeIvMenu(); }
+// 软键盘弹起在移动端也会触发 window resize，此时焦点落在自定义输入框内，不应关闭菜单
+function onIvMenuResize(){
+  const ae = document.activeElement;
+  if(ae && ae.id === 'iv-custom') return;
+  closeIvMenu();
+}
 function applyPollInterval(raw){
   const sec = Math.round(Number(raw));
   if(!(sec >= 10 && sec <= 3600)){ toast('请输入 10 ~ 3600 之间的秒数', 'err'); return false; }
@@ -1216,10 +1222,9 @@ function toggleIvMenu(){
   const go = () => { if(applyPollInterval(input.value)) closeIvMenu(); };
   $('#iv-apply').onclick = go;
   input.onkeydown = (e) => { if(e.key === 'Enter') go(); };
-  setTimeout(() => input.focus(), 0);
   document.addEventListener('pointerdown', onIvMenuOutside, true);
   window.addEventListener('scroll', closeIvMenu, true);
-  window.addEventListener('resize', closeIvMenu);
+  window.addEventListener('resize', onIvMenuResize);
   window.addEventListener('keydown', onIvMenuKey, true);
 }
 
